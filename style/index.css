@@ -1,0 +1,53 @@
+:root {
+  --indent: 1em;
+}
+
+#filetree-jupyterlab {
+  background: var(--jp-layout-color1);
+  overflow: visible;
+  color: var(--jp-ui-font-color1);
+  /* This is needed so that all font sizing of children done in ems is
+   * relative to this base size */
+  font-size: var(--jp-ui-font-size1);
+}
+
+#filetree-jupyterlab header {
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  flex: 0 0 auto;
+  font-size: var(--jp-ui-font-size0);
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0px;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+.filetree-icon {
+  background-image: url('file-tree.svg');
+  min-width: 16px;
+  min-height: 16px;
+  background-size: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin: auto;
+}
+
+.filetree-item-text {
+  padding-left: var(--indent);
+}
+
+.filetree-item:hover {
+  cursor: pointer;
+  background-color: var(--jp-input-hover-background);
+}
+
+th {
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+}
+
+th, tr {
+  font-weight: normal;
+  padding: 8px 12px;
+}
