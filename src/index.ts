@@ -20,8 +20,20 @@ class FileTreeWidget extends Widget {
     this.title.closable = true;
     this.addClass('jp-filetreeWidget');
   }
+}
 
-  readonly div: HTMLDivElement;
+function switchView(mode: any) {
+  if(mode == "none") return "";
+  else return "none"
+}
+
+function toggleFolder(row: any, parent: any) {
+  let children = parent.children;
+  for(let i = 0; i < children.length; i++) {
+	if(children[i] != row) {
+	  children[i].style.display = switchView(children[i].style.display);
+	}
+  }
 }
 
 function buildTableContents(body: any, data: any, level: number) {
@@ -29,24 +41,42 @@ function buildTableContents(body: any, data: any, level: number) {
     let tr = document.createElement('tr');
     let td = document.createElement('td');
 
-    td.appendChild(document.createTextNode(key));
-    td.className = 'filetree-item-text';
+    let icon = document.createElement('span');
+    icon.className = 'jp-DirListing-itemIcon jp-MaterialIcon ';
+    if(typeof data[key] !== 'string')
+      icon.className += 'jp-OpenFolderIcon';
+    else
+      icon.className += 'jp-FileIcon';
+    
+    td.appendChild(icon);  
+    let title = document.createElement('span')
+    title.innerText = key;
+    td.appendChild(title);    
+    td.className = 'filetree-item-text'; 
     td.style.setProperty('--indent', level + 'em');
+
     tr.appendChild(td);
     tr.className = 'filetree-item';
-    body.appendChild(tr);
 
-    if(typeof data[key] !== 'string')
-    	buildTableContents(body, data[key], level+1);
+    if(typeof data[key] !== 'string') {
+      var tbody = document.createElement('tbody');
+      tbody.appendChild(tr);
+      tr.onclick = function() { toggleFolder(tr, tbody); }
+      buildTableContents(tbody, data[key], level+1);
+      body.appendChild(tbody);
+    } else {
+      body.appendChild(tr);
+    }
   });
 }
 
 function buildTable(data: any) {
   let table = document.createElement('table');
+  table.className = 'filetree-head'
   let thead = table.createTHead();
   let tbody = table.createTBody();
   let headRow = document.createElement('tr');
-  ['File Name','Version'].forEach(function(el) {
+  ['File Name'].forEach(function(el) {
     let th = document.createElement('th');
     th.appendChild(document.createTextNode(el));
     headRow.appendChild(th);
