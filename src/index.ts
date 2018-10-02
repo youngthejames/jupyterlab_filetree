@@ -8,14 +8,12 @@ import {
 
 import '../style/index.css';
 
-var FILES = {'jupyter': { 'permissions.hjson': '', 'appdefs': {'core': {'appdef.hjson': ''}}}}
-
 class FileTreeWidget extends Widget {
   constructor() {
     super();
 
     this.id = 'filetree-jupyterlab';
-    this.title.iconClass = 'filetree-icon'
+    this.title.iconClass = 'filetree-icon';
     this.title.caption= 'File Tree';
     this.title.closable = true;
     this.addClass('jp-filetreeWidget');
@@ -50,7 +48,7 @@ function buildTableContents(body: any, data: any, level: number) {
     
     td.appendChild(icon);  
     let title = document.createElement('span')
-    title.innerText = key;
+    title.innerHTML = key;
     td.appendChild(title);    
     td.className = 'filetree-item-text'; 
     td.style.setProperty('--indent', level + 'em');
@@ -58,25 +56,31 @@ function buildTableContents(body: any, data: any, level: number) {
     tr.appendChild(td);
     tr.className = 'filetree-item';
 
-    if(typeof data[key] !== 'string') {
+    if (!(data[key] instanceof Array)) {
       var tbody = document.createElement('tbody');
       tbody.appendChild(tr);
       tr.onclick = function() { toggleFolder(tr, tbody); }
       buildTableContents(tbody, data[key], level+1);
       body.appendChild(tbody);
     } else {
+      tr.onclick = function() {}
+      for (var value in data[key]) {
+        var temp = document.createElement('td');
+        temp.innerHTML = value;
+        tr.appendChild(temp);
+      }
       body.appendChild(tr);
     }
   });
 }
 
-function buildTable(data: any) {
+function buildTable(headers: any, data: any) {
   let table = document.createElement('table');
   table.className = 'filetree-head'
   let thead = table.createTHead();
   let tbody = table.createTBody();
   let headRow = document.createElement('tr');
-  ['File Name'].forEach(function(el) {
+  headers.forEach(function(el: string) {
     let th = document.createElement('th');
     th.appendChild(document.createTextNode(el));
     headRow.appendChild(th);
@@ -100,8 +104,19 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer) {
   header.textContent = 'File Tree';
   widget.node.appendChild(header);
 
-  let table = buildTable(FILES);
-  widget.node.appendChild(table);
+  function callback(resp: any) {
+      var table = buildTable(resp['meta'], resp['files']);
+      widget.node.appendChild(table);
+  }
+
+  let xmlHttp = new XMLHttpRequest();
+  xmlHttp.onreadystatechange = function() {
+    if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+      callback(JSON.parse(xmlHttp.responseText));
+  }
+  xmlHttp.open('GET', '/file_tree', true);
+  xmlHttp.withCredentials = true;
+  xmlHttp.send();
 
   app.shell.addToLeftArea(widget);
 }

@@ -4,7 +4,7 @@
 
 #filetree-jupyterlab {
   background: var(--jp-layout-color1);
-  overflow: visible;
+  overflow: scroll;
   color: var(--jp-ui-font-color1);
   /* This is needed so that all font sizing of children done in ems is
    * relative to this base size */
@@ -42,19 +42,27 @@
 .filetree-item-text {
   padding-left: var(--indent);
   display: flex;
+  flex: 1 0 100%;
 }
 
+.filetree-item {
+  display: flex;
+}
 .filetree-item:hover {
   cursor: pointer;
   /* background-color: var(--jp-input-hover-background); */
 }
 
+tbody {
+  width: 100%;
+}
+
 th {
   border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  padding: 8px 12px;
 }
 
 th, tr {
   font-weight: normal;
-  padding: 8px 12px;
   width: 100%;
 }
