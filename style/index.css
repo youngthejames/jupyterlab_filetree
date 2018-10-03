@@ -42,27 +42,30 @@
 .filetree-item-text {
   padding-left: var(--indent);
   display: flex;
-  flex: 1 0 100%;
 }
 
 .filetree-item {
-  display: flex;
+  padding: 2px 0px;
 }
 .filetree-item:hover {
   cursor: pointer;
   /* background-color: var(--jp-input-hover-background); */
 }
 
-tbody {
-  width: 100%;
-}
-
 th {
   border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  font-size: var(--jp-ui-font-size0);
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin: 0px;
   padding: 8px 12px;
+  text-transform: uppercase;
+}
+
+td {
+  text-align: center;
 }
 
 th, tr {
   font-weight: normal;
-  width: 100%;
 }
