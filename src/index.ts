@@ -129,12 +129,16 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer) {
     execute: args => {
       let row = args['row'] as string;
       let level = args['level'] as number;
-      let base = app.serviceManager.contents.get(row);
-      base.then(res => {
-        console.log(res.content);
-        let row_element = document.getElementById(row);
-        widget.buildTableContents(res.content, level, row_element);
-      });
+
+      let row_element = document.getElementById(row);
+      if(row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
+        
+      } else { // if children elements don't exist yet
+        let base = app.serviceManager.contents.get(row);
+        base.then(res => {
+          widget.buildTableContents(res.content, level, row_element);
+        });
+      }
     }
   });
 }
