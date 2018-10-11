@@ -3,7 +3,7 @@ import {
 } from '@jupyterlab/application';
 
 import {
-	ContentsManager
+  ContentsManager
 } from '@jupyterlab/services';
 
 import {
@@ -13,7 +13,11 @@ import {
 import '../style/index.css';
 
 class FileTreeWidget extends Widget {
-  constructor() {
+  cm: ContentsManager;
+  commands: any
+  table: HTMLElement;
+
+  constructor(lab: JupyterLab) {
     super();
 
     this.id = 'filetree-jupyterlab';
@@ -21,111 +25,117 @@ class FileTreeWidget extends Widget {
     this.title.caption= 'File Tree';
     this.title.closable = true;
     this.addClass('jp-filetreeWidget');
+
+    this.cm = lab.serviceManager.contents;
+    this.commands = lab.commands;
+
+    let base = this.cm.get('');
+    base.then((res) => {
+      var table = this.buildTable(['File Name'], res.content);
+      this.node.appendChild(table);
+    });
   }
-}
 
-function switchView(mode: any) {
-  if(mode == "none") return "";
-  else return "none"
-}
+  buildTable(headers: any, data: any) {
+    let table = document.createElement('table');
+    table.className = 'filetree-head';
+    let thead = table.createTHead();
+    let tbody = table.createTBody();
+    tbody.id = 'filetree-body';
+    let headRow = document.createElement('tr');
+    headers.forEach(function(el: string) {
+      let th = document.createElement('th');
+      th.appendChild(document.createTextNode(el));
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
 
-function toggleFolder(row: any, parent: any) {
-  let children = parent.children;
-  for(let i = 0; i < children.length; i++) {
-	if(children[i].id.startsWith(row.id) && children[i] != row) {
-	  children[i].style.display = switchView(children[i].style.display);
-	}
+    this.table = tbody;
+    this.buildTableContents(data, 1, '');
+
+    table.appendChild(tbody);
+
+    return table;
   }
-}
 
-async function buildTableContents(contentManager: ContentsManager, body: any, data: any, level: number, parent: string) {
-  for(var index in data) {
-  	var entry = data[index];
-    let tr = document.createElement('tr');
+  buildTableContents(data: any, level: number, parent: any) {
+  	let commands = this.commands
+    for(var index in data) {
+	  let entry = data[index];
+      let tr = this.createTreeElement(entry, level);
+
+      if (entry.type === 'directory') {
+        tr.onclick = function() { commands.execute('filetree:toggle', {'row': entry.path, 'level': level+1}); }
+      } else {
+        tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
+      }
+
+      if(level === 1)
+	    this.table.appendChild(tr);
+      else
+	    parent.after(tr);
+    }
+  }
+
+  toggleFolder(row: any, newLevel: number) {
+  	this.commands.execute('filetree:toggle');
+  	console.log(this);
+
+  }
+
+  switchView(mode: any) {
+    if(mode == "none") return "";
+    else return "none"
+  }
+
+  createTreeElement(object: any, level: number) {
+	let tr = document.createElement('tr');
     let td = document.createElement('td');
 
     let icon = document.createElement('span');
     icon.className = 'jp-DirListing-itemIcon jp-MaterialIcon ';
-    if(entry.type === 'directory')
+    if(object.type === 'directory')
       icon.className += 'jp-OpenFolderIcon';
     else
       icon.className += 'jp-FileIcon';
     
     td.appendChild(icon);  
     let title = document.createElement('span');
-    title.innerHTML = entry.name;
+    title.innerHTML = object.name;
     td.appendChild(title);
     td.className = 'filetree-item-text'; 
     td.style.setProperty('--indent', level + 'em');
 
     tr.appendChild(td);
     tr.className = 'filetree-item';
-    tr.id = entry.path
+    tr.id = object.path;
 
-    if (entry.type === 'directory') {
-      tr.onclick = function() { toggleFolder(tr, body); }
-      body.appendChild(tr);
-      let base = await contentManager.get(entry.path);
-      await buildTableContents(contentManager, body, base.content, level+1, tr.id);
-    } else {
-      tr.onclick = function() {console.log('open file');}
-      // for (var value in data[key]) {
-      //   var temp = document.createElement('td');
-      //   temp.innerHTML = data[key][value];
-      //   tr.appendChild(temp);
-      // }
-      body.appendChild(tr);
-    }
+    return tr;
   }
-}
 
-function buildTable(contentManager: ContentsManager, headers: any, data: any) {
-  let table = document.createElement('table');
-  table.className = 'filetree-head'
-  let thead = table.createTHead();
-  let tbody = table.createTBody();
-  let headRow = document.createElement('tr');
-  headers.forEach(function(el: string) {
-    let th = document.createElement('th');
-    th.appendChild(document.createTextNode(el));
-    headRow.appendChild(th);
-  });
-  thead.appendChild(headRow);
-  table.appendChild(thead);
-
-  buildTableContents(contentManager, tbody, data, 1, '');
-
-  table.appendChild(tbody);
-
-  return table;
 }
 
 function activate(app: JupyterLab, restorer: ILayoutRestorer) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
-  
-  let widget = new FileTreeWidget();
+
+  let widget = new FileTreeWidget(app);
   restorer.add(widget, 'filetree-jupyterlab');
-
-  // function callback(resp: any) {
-  //     var table = buildTable(resp['meta'], resp['files']);
-  //     widget.node.appendChild(table);
-  // }
-
-  // let xmlHttp = new XMLHttpRequest();
-  // xmlHttp.onreadystatechange = function() {
-  //   if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
-  //     callback(JSON.parse(xmlHttp.responseText));
-  // }
-  // xmlHttp.open('GET', '/file_tree', true);
-  // xmlHttp.withCredentials = true;
-  // xmlHttp.send();
-
   app.shell.addToLeftArea(widget);
-  let cm = app.serviceManager.contents;
-  let base = cm.get('');
-  base.then((res) => {
-    var table = buildTable(cm, ['File Name'], res.content);
-    widget.node.appendChild(table);
+
+  const toggle_command: string = 'filetree:toggle';
+
+  app.commands.addCommand(toggle_command, {
+    execute: args => {
+      let row = args['row'] as string;
+      let level = args['level'] as number;
+      let base = app.serviceManager.contents.get(row);
+      base.then(res => {
+        console.log(res.content);
+        let row_element = document.getElementById(row);
+        widget.buildTableContents(res.content, level, row_element);
+      });
+    }
   });
 }
 
