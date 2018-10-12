@@ -14,8 +14,9 @@ import '../style/index.css';
 
 class FileTreeWidget extends Widget {
   cm: ContentsManager;
-  commands: any
+  commands: any;
   table: HTMLElement;
+  controller: any;
 
   constructor(lab: JupyterLab) {
     super();
@@ -28,6 +29,7 @@ class FileTreeWidget extends Widget {
 
     this.cm = lab.serviceManager.contents;
     this.commands = lab.commands;
+    this.controller = {};
 
     let base = this.cm.get('');
     base.then((res) => {
@@ -67,6 +69,7 @@ class FileTreeWidget extends Widget {
 
       if (entry.type === 'directory') {
         tr.onclick = function() { commands.execute('filetree:toggle', {'row': entry.path, 'level': level+1}); }
+        this.controller[entry.path] = false;
       } else {
         tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
       }
@@ -82,11 +85,6 @@ class FileTreeWidget extends Widget {
   	this.commands.execute('filetree:toggle');
   	console.log(this);
 
-  }
-
-  switchView(mode: any) {
-    if(mode == "none") return "";
-    else return "none"
   }
 
   createTreeElement(object: any, level: number) {
@@ -116,6 +114,11 @@ class FileTreeWidget extends Widget {
 
 }
 
+function switchView(mode: any) {
+  if(mode == "none") return "";
+  else return "none"
+}
+
 function activate(app: JupyterLab, restorer: ILayoutRestorer) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
 
@@ -130,14 +133,33 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer) {
       let row = args['row'] as string;
       let level = args['level'] as number;
 
-      let row_element = document.getElementById(row);
+      var row_element = document.getElementById(row);
+
       if(row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
-        
+      	var display = switchView(document.getElementById(row_element.nextElementSibling.id).style.display);
+      	widget.controller[row] = !(widget.controller[row])
+      	// open folder
+        if (widget.controller[row]) {
+          console.log('open', row);
+          while (row_element.nextElementSibling.id.startsWith(row)) {
+      	    row_element = document.getElementById(row_element.nextElementSibling.id);
+      	    // check if the parent folder is open
+      	    if(widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]) 
+            	row_element.style.display = display;
+      	  }
+        } else { // close folder folder
+          console.log('close', row);
+          while (row_element.nextElementSibling.id.startsWith(row)) {
+      	    row_element = document.getElementById(row_element.nextElementSibling.id);
+            row_element.style.display = display;
+      	  }
+        }
       } else { // if children elements don't exist yet
         let base = app.serviceManager.contents.get(row);
         base.then(res => {
           widget.buildTableContents(res.content, level, row_element);
         });
+        widget.controller[row] = true;
       }
     }
   });
