@@ -138,21 +138,13 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer) {
       if(row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
       	var display = switchView(document.getElementById(row_element.nextElementSibling.id).style.display);
       	widget.controller[row] = !(widget.controller[row])
+      	var open_flag = widget.controller[row];
       	// open folder
-        if (widget.controller[row]) {
-          console.log('open', row);
-          while (row_element.nextElementSibling.id.startsWith(row)) {
-      	    row_element = document.getElementById(row_element.nextElementSibling.id);
-      	    // check if the parent folder is open
-      	    if(widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]) 
-            	row_element.style.display = display;
-      	  }
-        } else { // close folder folder
-          console.log('close', row);
-          while (row_element.nextElementSibling.id.startsWith(row)) {
-      	    row_element = document.getElementById(row_element.nextElementSibling.id);
-            row_element.style.display = display;
-      	  }
+        while (row_element.nextElementSibling.id.startsWith(row)) {
+      	  row_element = document.getElementById(row_element.nextElementSibling.id);
+      	  // check if the parent folder is open
+      	  if(!(open_flag) || widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]) 
+          	row_element.style.display = display;
         }
       } else { // if children elements don't exist yet
         let base = app.serviceManager.contents.get(row);
