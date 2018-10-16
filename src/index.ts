@@ -7,6 +7,10 @@ import {
 } from '@jupyterlab/services';
 
 import {
+	DocumentRegistry
+} from '@jupyterlab/docregistry';
+
+import {
   Widget
 } from '@phosphor/widgets';
 
@@ -14,6 +18,7 @@ import '../style/index.css';
 
 class FileTreeWidget extends Widget {
   cm: ContentsManager;
+  dr: DocumentRegistry;
   commands: any;
   table: HTMLElement;
   controller: any;
@@ -28,6 +33,7 @@ class FileTreeWidget extends Widget {
     this.addClass('jp-filetreeWidget');
 
     this.cm = lab.serviceManager.contents;
+    this.dr = lab.docRegistry;
     this.commands = lab.commands;
     this.controller = {};
 
@@ -92,11 +98,16 @@ class FileTreeWidget extends Widget {
     let td = document.createElement('td');
 
     let icon = document.createElement('span');
-    icon.className = 'jp-DirListing-itemIcon jp-MaterialIcon ';
+    icon.className = 'jp-DirListing-itemIcon ';
     if(object.type === 'directory')
-      icon.className += 'jp-OpenFolderIcon';
-    else
-      icon.className += 'jp-FileIcon';
+      icon.className += this.dr.getFileType('directory').iconClass;
+    else {
+      var iconClass = this.dr.getFileTypesForPath(object.path);
+      if (iconClass.length == 0)
+      	icon.className += this.dr.getFileType('text').iconClass;
+      else
+      	icon.className += this.dr.getFileTypesForPath(object.path)[0].iconClass;
+    }
     
     td.appendChild(icon);  
     let title = document.createElement('span');
@@ -125,6 +136,9 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer) {
   let widget = new FileTreeWidget(app);
   restorer.add(widget, 'filetree-jupyterlab');
   app.shell.addToLeftArea(widget);
+
+  console.log(app.docRegistry.fileTypes());
+  //console.log(app.docRegistry.getFileTypesForPath('jupyterlab_filetree/tsconfig.json')[0].iconClass);
 
   const toggle_command: string = 'filetree:toggle';
 
