@@ -7,8 +7,12 @@ import {
 } from '@jupyterlab/services';
 
 import {
-	DocumentRegistry
+  DocumentRegistry
 } from '@jupyterlab/docregistry';
+
+import {
+  IThemeManager
+} from '@jupyterlab/apputils';
 
 import {
   Widget
@@ -130,18 +134,20 @@ function switchView(mode: any) {
   else return "none"
 }
 
-function activate(app: JupyterLab, restorer: ILayoutRestorer) {
+function activate(app: JupyterLab, restorer: ILayoutRestorer, themeManager: IThemeManager) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
 
   let widget = new FileTreeWidget(app);
   restorer.add(widget, 'filetree-jupyterlab');
   app.shell.addToLeftArea(widget);
 
-  console.log(app.docRegistry.fileTypes());
-  //console.log(app.docRegistry.getFileTypesForPath('jupyterlab_filetree/tsconfig.json')[0].iconClass);
+  // if(themeManager.isLight(themeManager.theme))
+  //   console.log('Light theme detected - switching icons');
+
+  // console.log(app.docRegistry.fileTypes());
+  // //console.log(app.docRegistry.getFileTypesForPath('jupyterlab_filetree/tsconfig.json')[0].iconClass);
 
   const toggle_command: string = 'filetree:toggle';
-
   app.commands.addCommand(toggle_command, {
     execute: args => {
       let row = args['row'] as string;
@@ -174,7 +180,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer) {
 const extension: JupyterLabPlugin<void> = {
   id: 'jupyterlab_filetree',
   autoStart: true,
-  requires: [ILayoutRestorer],
+  requires: [ILayoutRestorer, IThemeManager],
   activate: activate
 };
 

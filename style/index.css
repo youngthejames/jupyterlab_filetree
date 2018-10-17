@@ -1,5 +1,15 @@
 :root {
   --indent: 1em;
+  --filetree-icon-light: url('file-tree-light.svg');
+  --filetree-icon-dark: url('file-tree-dark.svg');
+  --filetree-icon: var(--filetree-icon-dark);
+}
+
+[data-theme-light="true"] .filetree-icon {
+  --filetree-icon: var(--filetree-icon-light);
+}
+[data-theme-light="false"] .filetree-icon {
+  --filetree-icon: var(--filetree-icon-dark);
 }
 
 #filetree-jupyterlab {
@@ -23,7 +33,7 @@
 }
 
 .filetree-icon {
-  background-image: url('file-tree.svg');
+  background-image: var(--filetree-icon);
   min-width: 16px;
   min-height: 16px;
   background-size: 16px;
