@@ -15,6 +15,10 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
+	Time
+} from '@jupyterlab/coreutils';
+
+import {
   Widget
 } from '@phosphor/widgets';
 
@@ -43,7 +47,7 @@ class FileTreeWidget extends Widget {
 
     let base = this.cm.get('');
     base.then((res) => {
-      var table = this.buildTable(['File Name'], res.content);
+      var table = this.buildTable(['File Name', 'Last Modified'], res.content);
       this.node.appendChild(table);
     });
   }
@@ -100,6 +104,7 @@ class FileTreeWidget extends Widget {
   createTreeElement(object: any, level: number) {
 	let tr = document.createElement('tr');
     let td = document.createElement('td');
+    let td1 = document.createElement('td');
 
     let icon = document.createElement('span');
     icon.className = 'jp-DirListing-itemIcon ';
@@ -120,7 +125,13 @@ class FileTreeWidget extends Widget {
     td.className = 'filetree-item-text'; 
     td.style.setProperty('--indent', level + 'em');
 
+    let date = document.createElement('span');
+    date.innerHTML = Time.formatHuman(object.last_modified);
+    td1.className = 'filetree-date';
+    td1.appendChild(date);
+
     tr.appendChild(td);
+    tr.appendChild(td1);
     tr.className = 'filetree-item';
     tr.id = object.path;
 
@@ -140,12 +151,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, themeManager: IThe
   let widget = new FileTreeWidget(app);
   restorer.add(widget, 'filetree-jupyterlab');
   app.shell.addToLeftArea(widget);
-
-  // if(themeManager.isLight(themeManager.theme))
-  //   console.log('Light theme detected - switching icons');
-
-  // console.log(app.docRegistry.fileTypes());
-  // //console.log(app.docRegistry.getFileTypesForPath('jupyterlab_filetree/tsconfig.json')[0].iconClass);
 
   const toggle_command: string = 'filetree:toggle';
   app.commands.addCommand(toggle_command, {

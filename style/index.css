@@ -54,12 +54,14 @@
   display: flex;
 }
 
-.filetree-item {
-  padding: 2px 0px;
+.filetree-date {
+  text-align: right;
+  padding-right: 10px;
 }
+
 .filetree-item:hover {
   cursor: pointer;
-  /* background-color: var(--jp-input-hover-background); */
+  background-color: var(--jp-input-hover-background);
 }
 
 th {
@@ -74,6 +76,7 @@ th {
 
 td {
   text-align: center;
+  padding-top: 2px;
 }
 
 th, tr {
