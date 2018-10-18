@@ -7,11 +7,10 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/my_name/myextension",
+  "homepage": "https://github.com/youngthejames/jupyterlab_filetree",
   "bugs": {
-    "url": "https://github.com/my_name/myextension/issues"
+    "url": "https://github.com/youngthejames/jupyterlab_filetree/issues"
   },
-  "license": "BSD-3-Clause",
   "author": "James Young",
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
@@ -21,7 +20,7 @@
   "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/my_name/myextension.git"
+    "url": "https://github.com/youngthejames/jupyterlab_filetree.git"
   },
   "scripts": {
     "build": "tsc",
