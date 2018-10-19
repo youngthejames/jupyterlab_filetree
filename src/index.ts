@@ -76,12 +76,11 @@ class FileTreeWidget extends Widget {
   }
 
   buildTableContents(data: any, level: number, parent: any) {
-  	let commands = this.commands
+    let commands = this.commands
     let map = this.sortContents(data);
-    console.log(map); 
     for(var index in data) {
       let sorted_entry = map[parseInt(index)];
-	    let entry = data[sorted_entry[1]];
+      let entry = data[sorted_entry[1]];
       let tr = this.createTreeElement(entry, level);
 
       if (entry.type === 'directory') {
@@ -92,9 +91,9 @@ class FileTreeWidget extends Widget {
       }
 
       if(level === 1)
-	      this.table.appendChild(tr);
+        this.table.appendChild(tr);
       else
-	      parent.after(tr);
+        parent.after(tr);
         parent = tr;
     }
   }
@@ -108,13 +107,11 @@ class FileTreeWidget extends Widget {
   }
 
   toggleFolder(row: any, newLevel: number) {
-  	this.commands.execute('filetree:toggle');
-  	console.log(this);
-
+    this.commands.execute('filetree:toggle');
   }
 
   createTreeElement(object: any, level: number) {
-	let tr = document.createElement('tr');
+  let tr = document.createElement('tr');
     let td = document.createElement('td');
     let td1 = document.createElement('td');
 
@@ -125,9 +122,9 @@ class FileTreeWidget extends Widget {
     else {
       var iconClass = this.dr.getFileTypesForPath(object.path);
       if (iconClass.length == 0)
-      	icon.className += this.dr.getFileType('text').iconClass;
+        icon.className += this.dr.getFileType('text').iconClass;
       else
-      	icon.className += this.dr.getFileTypesForPath(object.path)[0].iconClass;
+        icon.className += this.dr.getFileTypesForPath(object.path)[0].iconClass;
     }
     
     td.appendChild(icon);  
@@ -173,15 +170,15 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, themeManager: IThe
       var row_element = document.getElementById(row);
 
       if(row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
-      	var display = switchView(document.getElementById(row_element.nextElementSibling.id).style.display);
-      	widget.controller[row] = !(widget.controller[row])
-      	var open_flag = widget.controller[row];
-      	// open folder
+        var display = switchView(document.getElementById(row_element.nextElementSibling.id).style.display);
+        widget.controller[row] = !(widget.controller[row])
+        var open_flag = widget.controller[row];
+        // open folder
         while (row_element.nextElementSibling.id.startsWith(row)) {
-      	  row_element = document.getElementById(row_element.nextElementSibling.id);
-      	  // check if the parent folder is open
-      	  if(!(open_flag) || widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]) 
-          	row_element.style.display = display;
+          row_element = document.getElementById(row_element.nextElementSibling.id);
+          // check if the parent folder is open
+          if(!(open_flag) || widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]) 
+            row_element.style.display = display;
         }
       } else { // if children elements don't exist yet
         let base = app.serviceManager.contents.get(row);
