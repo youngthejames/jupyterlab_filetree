@@ -77,8 +77,11 @@ class FileTreeWidget extends Widget {
 
   buildTableContents(data: any, level: number, parent: any) {
   	let commands = this.commands
+    let map = this.sortContents(data);
+    console.log(map); 
     for(var index in data) {
-	  let entry = data[index];
+      let sorted_entry = map[parseInt(index)];
+	    let entry = data[sorted_entry[1]];
       let tr = this.createTreeElement(entry, level);
 
       if (entry.type === 'directory') {
@@ -89,10 +92,19 @@ class FileTreeWidget extends Widget {
       }
 
       if(level === 1)
-	    this.table.appendChild(tr);
+	      this.table.appendChild(tr);
       else
-	    parent.after(tr);
+	      parent.after(tr);
+        parent = tr;
     }
+  }
+
+  sortContents(data: any) {
+    let names = [];
+    for(var i in data) {
+      names[names.length] = [data[i].name, parseInt(i)]
+    }
+    return names.sort();
   }
 
   toggleFolder(row: any, newLevel: number) {
