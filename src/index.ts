@@ -11,8 +11,8 @@ import {
 } from '@jupyterlab/docregistry';
 
 import {
-  IThemeManager
-} from '@jupyterlab/apputils';
+  IDocumentManager
+} from '@jupyterlab/docmanager';
 
 import {
 	Time
@@ -28,7 +28,8 @@ class FileTreeWidget extends Widget {
   cm: ContentsManager;
   dr: DocumentRegistry;
   commands: any;
-  table: HTMLElement;
+  table: HTMLTableElement;
+  tree: HTMLElement;
   controller: any;
 
   constructor(lab: JupyterLab) {
@@ -46,7 +47,8 @@ class FileTreeWidget extends Widget {
     this.controller = {};
 
     let base = this.cm.get('');
-    base.then((res) => {
+    base.then(res => {
+      this.controller[''] = {'last_modified': res.last_modified, 'open':true};
       var table = this.buildTable(['File Name', 'Last Modified'], res.content);
       this.node.appendChild(table);
     });
@@ -67,12 +69,47 @@ class FileTreeWidget extends Widget {
     thead.appendChild(headRow);
     table.appendChild(thead);
 
-    this.table = tbody;
+    this.table = table;
+    this.tree = tbody;
     this.buildTableContents(data, 1, '');
 
     table.appendChild(tbody);
 
     return table;
+  }
+
+  reload() { // rebuild tree
+    this.table.removeChild(this.tree);
+    let tbody = this.table.createTBody();
+    tbody.id = 'filetree-body';
+    this.tree = tbody;
+    let base = this.cm.get('');
+    base.then(res => {
+      this.buildTableContents(res.content, 1, '');
+    });
+    this.table.appendChild(tbody);
+  }
+
+  restore() { // restore expansion prior to rebuild
+    let array: Promise<any>[] = [];
+    Object.keys(this.controller).forEach(key => {
+      if(this.controller[key]['open'] && key !== '') {
+        console.log(key);
+        // var row_element = document.getElementById(key.substring(0,key.lastIndexOf('/')));
+        array.push(this.cm.get(key));
+        // base.then(res => {
+        //   console.log(res.content);
+        //   this.buildTableContents(res.content, 1+res.path.split('/').length, row_element);
+        // });
+      }
+    });
+    Promise.all(array).then(results => {
+      for(var r in results) {
+        console.log(results[r]);
+        var row_element = document.getElementById(results[r].path);
+        this.buildTableContents(results[r].content, 1+results[r].path.split('/').length, row_element);
+      }
+    });
   }
 
   buildTableContents(data: any, level: number, parent: any) {
@@ -85,16 +122,19 @@ class FileTreeWidget extends Widget {
 
       if (entry.type === 'directory') {
         tr.onclick = function() { commands.execute('filetree:toggle', {'row': entry.path, 'level': level+1}); }
-        this.controller[entry.path] = false;
+        if (!(entry.path in this.controller))
+          this.controller[entry.path] = {'last_modified': entry.last_modified, 'open':false};
       } else {
         tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
       }
 
       if(level === 1)
-        this.table.appendChild(tr);
-      else
+        this.tree.appendChild(tr);
+      else {
         parent.after(tr);
         parent = tr;
+      }
+        
     }
   }
 
@@ -111,7 +151,7 @@ class FileTreeWidget extends Widget {
   }
 
   createTreeElement(object: any, level: number) {
-  let tr = document.createElement('tr');
+    let tr = document.createElement('tr');
     let td = document.createElement('td');
     let td1 = document.createElement('td');
 
@@ -154,7 +194,7 @@ function switchView(mode: any) {
   else return "none"
 }
 
-function activate(app: JupyterLab, restorer: ILayoutRestorer, themeManager: IThemeManager) {
+function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocumentManager) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
 
   let widget = new FileTreeWidget(app);
@@ -171,30 +211,44 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, themeManager: IThe
 
       if(row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
         var display = switchView(document.getElementById(row_element.nextElementSibling.id).style.display);
-        widget.controller[row] = !(widget.controller[row])
-        var open_flag = widget.controller[row];
+        widget.controller[row]['open'] = !(widget.controller[row]['open'])
+        var open_flag = widget.controller[row]['open'];
         // open folder
         while (row_element.nextElementSibling.id.startsWith(row)) {
           row_element = document.getElementById(row_element.nextElementSibling.id);
           // check if the parent folder is open
-          if(!(open_flag) || widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]) 
+          if(!(open_flag) || widget.controller[row_element.id.substring(0,row_element.id.lastIndexOf('/'))]['open']) 
             row_element.style.display = display;
         }
       } else { // if children elements don't exist yet
         let base = app.serviceManager.contents.get(row);
         base.then(res => {
           widget.buildTableContents(res.content, level, row_element);
+          widget.controller[row] = {'last_modified': res.last_modified, 'open':true};
         });
-        widget.controller[row] = true;
       }
     }
   });
+
+  setInterval(() => {
+    Object.keys(widget.controller).forEach(key => {
+      let promise = app.serviceManager.contents.get(key);
+      promise.then(res => {
+        if(res.last_modified > widget.controller[key]['last_modified']){
+          console.log('Change found in ' + key);
+          widget.controller[key]['last_modified'] = res.last_modified;
+          widget.reload();
+          widget.restore();
+        }
+      });
+    });
+  }, 10000);
 }
 
 const extension: JupyterLabPlugin<void> = {
   id: 'jupyterlab_filetree',
   autoStart: true,
-  requires: [ILayoutRestorer, IThemeManager],
+  requires: [ILayoutRestorer, IDocumentManager],
   activate: activate
 };
 
