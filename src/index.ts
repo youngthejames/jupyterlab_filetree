@@ -94,18 +94,11 @@ class FileTreeWidget extends Widget {
     let array: Promise<any>[] = [];
     Object.keys(this.controller).forEach(key => {
       if(this.controller[key]['open'] && key !== '') {
-        console.log(key);
-        // var row_element = document.getElementById(key.substring(0,key.lastIndexOf('/')));
         array.push(this.cm.get(key));
-        // base.then(res => {
-        //   console.log(res.content);
-        //   this.buildTableContents(res.content, 1+res.path.split('/').length, row_element);
-        // });
       }
     });
     Promise.all(array).then(results => {
       for(var r in results) {
-        console.log(results[r]);
         var row_element = document.getElementById(results[r].path);
         this.buildTableContents(results[r].content, 1+results[r].path.split('/').length, row_element);
       }
@@ -235,7 +228,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
       let promise = app.serviceManager.contents.get(key);
       promise.then(res => {
         if(res.last_modified > widget.controller[key]['last_modified']){
-          console.log('Change found in ' + key);
           widget.controller[key]['last_modified'] = res.last_modified;
           widget.reload();
           widget.restore();
