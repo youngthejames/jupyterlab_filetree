@@ -1,5 +1,5 @@
 import {
-  JupyterLab, JupyterLabPlugin, ILayoutRestorer
+  JupyterLab, JupyterLabPlugin, ILayoutRestorer, IRouter
 } from '@jupyterlab/application';
 
 import {
@@ -15,7 +15,7 @@ import {
 } from '@jupyterlab/docmanager';
 
 import {
-	Time
+	Time, URLExt, PathExt, PageConfig
 } from '@jupyterlab/coreutils';
 
 import {
@@ -23,6 +23,11 @@ import {
 } from '@phosphor/widgets';
 
 import '../style/index.css';
+
+namespace Patterns {
+  export const tree = new RegExp(`^${PageConfig.getOption('treeUrl')}([^?]+)`);
+  export const workspace = new RegExp(`^${PageConfig.getOption('workspacesUrl')}[^?\/]+/tree/([^?]+)`);
+}
 
 class FileTreeWidget extends Widget {
   cm: ContentsManager;
@@ -187,7 +192,7 @@ function switchView(mode: any) {
   else return "none"
 }
 
-function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocumentManager) {
+function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocumentManager, router: IRouter) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
 
   let widget = new FileTreeWidget(app);
@@ -223,6 +228,54 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   });
 
+  app.commands.addCommand('filetree:navigate', {
+    execute: async args => {
+      const treeMatch = router.current.path.match(Patterns.tree);
+      const workspaceMatch = router.current.path.match(Patterns.workspace);
+      const match = treeMatch || workspaceMatch;
+      const path = decodeURI(match[1]);
+      const { page, workspaces } = app.info.urls;
+      const workspace = PathExt.basename(app.info.workspace);
+      const url =
+        (workspaceMatch ? URLExt.join(workspaces, workspace) : page) +
+        router.current.search +
+        router.current.hash;
+        const silent = true;
+
+      // Silently remove the tree portion of the URL leaving the rest intact.
+      router.navigate(url, { silent });
+
+      try {
+        console.log('Hit the tree endpoint: ' + path);
+        var paths: string[] = [];
+        var temp: string[] = path.split('/');
+        var current: string = '';
+        for(var t in temp) {
+          current += (current == '') ? temp[t] : '/' + temp[t];
+          paths.push(current);
+        }
+        let array: Promise<any>[] = [];
+        paths.forEach(key => {
+          array.push(app.serviceManager.contents.get(key));
+        });
+        Promise.all(array).then(results => {
+          console.log(results);
+          for(var r in results) {
+            if(results[r].type === 'directory') {
+              var row_element = document.getElementById(results[r].path);
+              widget.buildTableContents(results[r].content, 1+results[r].path.split('/').length, row_element);
+            }
+          }
+        });
+      } catch (error) {
+        console.warn('Tree routing failed.', error);
+      }
+    }
+  });
+
+  router.register({ command: 'filetree:navigate', pattern: Patterns.tree });
+  router.register({ command: 'filetree:navigate', pattern: Patterns.workspace });
+
   setInterval(() => {
     Object.keys(widget.controller).forEach(key => {
       let promise = app.serviceManager.contents.get(key);
@@ -240,7 +293,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
 const extension: JupyterLabPlugin<void> = {
   id: 'jupyterlab_filetree',
   autoStart: true,
-  requires: [ILayoutRestorer, IDocumentManager],
+  requires: [ILayoutRestorer, IDocumentManager, IRouter],
   activate: activate
 };
 
