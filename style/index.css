@@ -72,11 +72,15 @@ th {
   margin: 0px;
   padding: 8px 12px;
   text-transform: uppercase;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 td {
   text-align: center;
   padding-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 th, tr {
