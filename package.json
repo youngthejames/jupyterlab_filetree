@@ -29,8 +29,8 @@
     "prepare": "npm run clean && npm run build"
   },
   "dependencies": {
-    "@jupyterlab/application": "^0.18.6",
-    "@jupyterlab/docmanager": "^0.18.4",
+    "@jupyterlab/application": "^0.19.1",
+    "@jupyterlab/docmanager": "^0.19.1",
     "@jupyterlab/services": "^3.2.1"
   },
   "devDependencies": {

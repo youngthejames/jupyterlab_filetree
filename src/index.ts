@@ -19,7 +19,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  showErrorMessage
+  showErrorMessage, showDialog, Dialog
 } from '@jupyterlab/apputils';
 
 import {
@@ -86,6 +86,43 @@ namespace Private {
     });
   }
 
+  export function createOpenNode(): HTMLElement {
+    let body = document.createElement('div');
+    let existingLabel = document.createElement('label');
+    existingLabel.textContent = 'File Path:';
+
+    let input = document.createElement('input');
+    input.value = '';
+    input.placeholder = '/path/to/file';
+
+    body.appendChild(existingLabel);
+    body.appendChild(input);
+    return body;
+  }
+
+}
+
+class OpenDirectWidget extends Widget {
+  /**
+   * Construct a new open file widget.
+   */
+  constructor() {
+    super({ node: Private.createOpenNode() });
+  }
+
+  /**
+   * Get the value of the widget.
+   */
+  getValue(): string {
+    return this.inputNode.value;
+  }
+
+  /**
+   * Get the input text node.
+   */
+  get inputNode(): HTMLInputElement {
+    return this.node.getElementsByTagName('input')[0] as HTMLInputElement;
+  }
 }
 
 class FileTreeWidget extends Widget {
@@ -199,12 +236,12 @@ class FileTreeWidget extends Widget {
 
       if (entry.type === 'directory') {
         tr.onclick = function() { commands.execute('filetree:toggle', {'row': entry.path, 'level': level+1}); }
-        tr.oncontextmenu = function() { commands.execute('filetree:setContext', {'path': entry.path}); }
+        tr.oncontextmenu = function() { commands.execute('filetree:set-context', {'path': entry.path}); }
         if (!(entry.path in this.controller))
           this.controller[entry.path] = {'last_modified': entry.last_modified, 'open':false};
       } else {
         tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
-        tr.oncontextmenu = function() { commands.execute('filetree:setContext', {'path': entry.path}); }
+        tr.oncontextmenu = function() { commands.execute('filetree:set-context', {'path': entry.path}); }
       }
 
       if(level === 1)
@@ -232,12 +269,14 @@ class FileTreeWidget extends Widget {
     let tr = document.createElement('tr');
     let td = document.createElement('td');
     let td1 = document.createElement('td');
+    tr.className = 'filetree-item';
 
     let icon = document.createElement('span');
     icon.className = 'jp-DirListing-itemIcon ';
-    if(object.type === 'directory')
+    if(object.type === 'directory') {
       icon.className += this.dr.getFileType('directory').iconClass;
-    else {
+      tr.className += ' filetree-folder';
+    } else {
       var iconClass = this.dr.getFileTypesForPath(object.path);
       if (iconClass.length == 0)
         icon.className += this.dr.getFileType('text').iconClass;
@@ -260,7 +299,6 @@ class FileTreeWidget extends Widget {
 
     tr.appendChild(td);
     tr.appendChild(td1);
-    tr.className = 'filetree-item';
     tr.id = object.path;
 
     return tr;
@@ -355,7 +393,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   router.register({ command: 'filetree:navigate', pattern: Patterns.tree });
   router.register({ command: 'filetree:navigate', pattern: Patterns.workspace });
 
-  app.commands.addCommand('filetree:setContext', {
+  app.commands.addCommand('filetree:set-context', {
     label: 'Need some Context',
     execute: (args) => {
       widget.selected = args['path'] as string;
@@ -396,11 +434,53 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
+  app.commands.addCommand('filetree:create-folder', {
+    label: 'New Folder',
+    iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-NewFolderIcon',
+    execute: () => {
+      manager.newUntitled({
+        path: widget.selected,
+        type: 'directory'
+      });
+      console.log('new folder create');
+    }
+  })
+
+  app.commands.addCommand('filetree:create-file', {
+    label: 'New File',
+    iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-AddIcon',
+    execute: () => {
+      showDialog({
+        title: 'Create File',
+        body: new OpenDirectWidget(),
+        buttons: [Dialog.cancelButton(), Dialog.okButton({ label: 'CREATE' })],
+        focusNodeSelector: 'input'
+      }).then((result: any) => {
+        if (result.button.label === 'CREATE') {
+          manager.createNew(PathExt.join(widget.selected, result.value));
+          console.log('new file create');
+        }
+      });
+    }
+  })
+
   app.contextMenu.addItem({
     command: 'filetree:rename',
     selector: '.filetree-item',
-    rank: 1
+    rank: 3
   });
+
+  app.contextMenu.addItem({
+    command: 'filetree:create-folder',
+    selector: '.filetree-folder',
+    rank: 2
+  })
+
+  app.contextMenu.addItem({
+    command: 'filetree:create-file',
+    selector: '.filetree-folder',
+    rank: 1
+  })
 
   setInterval(() => {
     Object.keys(widget.controller).forEach(key => {
