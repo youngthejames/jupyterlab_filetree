@@ -216,7 +216,8 @@ class FileTreeWidget extends Widget {
   updateController(oldPath: string, newPath: string) { // replace keys for renamed path
     Object.keys(this.controller).forEach(key => {
       if(key.startsWith(oldPath)) {
-        this.controller[key.replace(oldPath, newPath)] = this.controller[key];
+        if(newPath !== '')
+          this.controller[key.replace(oldPath, newPath)] = this.controller[key];
         delete this.controller[key];  
       }
     });
@@ -259,10 +260,6 @@ class FileTreeWidget extends Widget {
       names[names.length] = [data[i].name, parseInt(i)]
     }
     return names.sort();
-  }
-
-  toggleFolder(row: any, newLevel: number) {
-    this.commands.execute('filetree:toggle');
   }
 
   createTreeElement(object: any, level: number) {
@@ -430,7 +427,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         widget.updateController(current_id, new_path);
         text_area.innerHTML = newName;
       });
-      // update everything
     }
   })
 
@@ -442,7 +438,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         path: widget.selected,
         type: 'directory'
       });
-      console.log('new folder create');
     }
   })
 
@@ -457,8 +452,28 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         focusNodeSelector: 'input'
       }).then((result: any) => {
         if (result.button.label === 'CREATE') {
-          manager.createNew(PathExt.join(widget.selected, result.value));
-          console.log('new file create');
+          let new_file = PathExt.join(widget.selected, result.value);
+          manager.createNew(new_file);
+          if(!(widget.selected in widget.controller) || widget.controller[widget.selected]['open'] == false)
+            app.commands.execute('filetree:toggle', {'row': widget.selected, 'level': new_file.split('/').length});
+        }
+      });
+    }
+  })
+
+  app.commands.addCommand('filetree:delete', {
+    label: 'Delete',
+    iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-CloseIcon',
+    execute: () => {
+      let message = `Are you sure you want to delete: ${widget.selected} ?`;
+      showDialog({
+        title: 'Delete',
+        body: message,
+        buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: 'DELETE' })]
+      }).then((result: any) => {
+        if (result.button.accept) {
+          manager.deleteFile(widget.selected);
+          widget.updateController(widget.selected, '');
         }
       });
     }
@@ -480,6 +495,12 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     command: 'filetree:create-file',
     selector: '.filetree-folder',
     rank: 1
+  })
+
+  app.contextMenu.addItem({
+    command: 'filetree:delete',
+    selector: '.filetree-item',
+    rank: 4
   })
 
   setInterval(() => {
