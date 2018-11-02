@@ -28,6 +28,24 @@ import {
 
 import '../style/index.css';
 
+namespace CommandIDs {
+  export const navigate = 'filetree:navigate';
+
+  export const toggle = 'filetree:toggle';
+
+  export const refresh = 'filetree:refresh';
+
+  export const set_context = 'filetree:set-context';
+
+  export const rename = 'filetree:rename';
+
+  export const create_folder = 'filetree:create-folder';
+
+  export const create_file = 'filetree:create-file';
+
+  export const delete_op = 'filetree:delete';
+}
+
 namespace Patterns {
 
   export const tree = new RegExp(`^${PageConfig.getOption('treeUrl')}([^?]+)`);
@@ -241,13 +259,13 @@ class FileTreeWidget extends Widget {
       let tr = this.createTreeElement(entry, level);
 
       if (entry.type === 'directory') {
-        tr.onclick = function() { commands.execute('filetree:toggle', {'row': entry.path, 'level': level+1}); }
-        tr.oncontextmenu = function() { commands.execute('filetree:set-context', {'path': entry.path}); }
+        tr.onclick = function() { commands.execute(CommandIDs.toggle, {'row': entry.path, 'level': level+1}); }
+        tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': entry.path}); }
         if (!(entry.path in this.controller))
           this.controller[entry.path] = {'last_modified': entry.last_modified, 'open':false};
       } else {
         tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
-        tr.oncontextmenu = function() { commands.execute('filetree:set-context', {'path': entry.path}); }
+        tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': entry.path}); }
       }
 
       if(level === 1)
@@ -320,8 +338,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   restorer.add(widget, 'filetree-jupyterlab');
   app.shell.addToLeftArea(widget);
 
-  const toggle_command: string = 'filetree:toggle';
-  app.commands.addCommand(toggle_command, {
+  app.commands.addCommand(CommandIDs.toggle, {
     execute: args => {
       let row = args['row'] as string;
       let level = args['level'] as number;
@@ -349,7 +366,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   });
 
-  app.commands.addCommand('filetree:navigate', {
+  app.commands.addCommand(CommandIDs.navigate, {
     execute: async args => {
       const treeMatch = router.current.path.match(Patterns.tree);
       const workspaceMatch = router.current.path.match(Patterns.workspace);
@@ -392,7 +409,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   });
 
-  app.commands.addCommand('filetree:refresh', {
+  app.commands.addCommand(CommandIDs.refresh, {
     execute: () => {
       Object.keys(widget.controller).forEach(key => {
       let promise = app.serviceManager.contents.get(key);
@@ -411,17 +428,17 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
-  router.register({ command: 'filetree:navigate', pattern: Patterns.tree });
-  router.register({ command: 'filetree:navigate', pattern: Patterns.workspace });
+  router.register({ command: CommandIDs.navigate, pattern: Patterns.tree });
+  router.register({ command: CommandIDs.navigate, pattern: Patterns.workspace });
 
-  app.commands.addCommand('filetree:set-context', {
+  app.commands.addCommand(CommandIDs.set_context, {
     label: 'Need some Context',
     execute: args => {
       widget.selected = args['path'] as string;
     }
   }); 
 
-  app.commands.addCommand('filetree:rename', {
+  app.commands.addCommand(CommandIDs.rename, {
     label: 'Rename',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-EditIcon',
     execute: () => {
@@ -454,7 +471,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
-  app.commands.addCommand('filetree:create-folder', {
+  app.commands.addCommand(CommandIDs.create_folder, {
     label: 'New Folder',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-NewFolderIcon',
     execute: args => {
@@ -465,7 +482,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
-  app.commands.addCommand('filetree:create-file', {
+  app.commands.addCommand(CommandIDs.create_file, {
     label: 'New File',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-AddIcon',
     execute: () => {
@@ -479,13 +496,13 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
           let new_file = PathExt.join(widget.selected, result.value);
           manager.createNew(new_file);
           if(!(widget.selected in widget.controller) || widget.controller[widget.selected]['open'] == false)
-            app.commands.execute('filetree:toggle', {'row': widget.selected, 'level': new_file.split('/').length});
+            app.commands.execute(CommandIDs.toggle, {'row': widget.selected, 'level': new_file.split('/').length});
         }
       });
     }
   })
 
-  app.commands.addCommand('filetree:delete', {
+  app.commands.addCommand(CommandIDs.delete_op, {
     label: 'Delete',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-CloseIcon',
     execute: () => {
@@ -504,25 +521,25 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   })
 
   app.contextMenu.addItem({
-    command: 'filetree:rename',
+    command: CommandIDs.rename,
     selector: '.filetree-item',
     rank: 3
   });
 
   app.contextMenu.addItem({
-    command: 'filetree:create-folder',
+    command: CommandIDs.create_folder,
     selector: '.filetree-folder',
     rank: 2
   })
 
   app.contextMenu.addItem({
-    command: 'filetree:create-file',
+    command: CommandIDs.create_file,
     selector: '.filetree-folder',
     rank: 1
   })
 
   app.contextMenu.addItem({
-    command: 'filetree:delete',
+    command: CommandIDs.delete_op,
     selector: '.filetree-item',
     rank: 4
   })
@@ -530,7 +547,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   let new_file = new ToolbarButton({
     iconClassName: 'jp-NewFolderIcon jp-Icon jp-Icon-16',
     onClick: () => {
-      app.commands.execute('filetree:create-folder', {'path': ''});
+      app.commands.execute(CommandIDs.create_folder, {'path': ''});
     },
     tooltip: 'New Folder'
   });
@@ -548,14 +565,14 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   let refresh = new ToolbarButton({
     iconClassName: 'jp-RefreshIcon jp-Icon jp-Icon-16',
     onClick: () => {
-      app.commands.execute('filetree:refresh');
+      app.commands.execute(CommandIDs.refresh);
     },
     tooltip: 'Refresh'
   });
   widget.toolbar.addItem('refresh', refresh);
 
   setInterval(() => {
-    app.commands.execute('filetree:refresh');
+    app.commands.execute(CommandIDs.refresh);
   }, 10000);
 }
 
