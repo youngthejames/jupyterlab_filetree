@@ -32,6 +32,18 @@
   text-transform: uppercase;
 }
 
+.filetree-toolbar {
+  padding: 0px;
+  justify-content: space-evenly;
+  border-bottom: none;
+  height: auto;
+  margin: var(--jp-toolbar-header-margin);
+  box-shadow: none;
+}
+.filetree-toolbar .jp-ToolbarButtonComponent {
+  padding: 0px 16px;
+}
+
 .filetree-icon {
   background-image: var(--filetree-icon);
   min-width: 16px;
@@ -62,6 +74,11 @@
 .filetree-item:hover {
   cursor: pointer;
   background-color: var(--jp-input-hover-background);
+}
+
+.filetree-item.selected {
+  color: white;
+  background: var(--jp-brand-color1);
 }
 
 th {

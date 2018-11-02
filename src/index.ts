@@ -19,11 +19,11 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  showErrorMessage, showDialog, Dialog
+  showErrorMessage, showDialog, Dialog, Toolbar, ToolbarButton
 } from '@jupyterlab/apputils';
 
 import {
-  Widget
+  Widget, PanelLayout
 } from '@phosphor/widgets';
 
 import '../style/index.css';
@@ -129,6 +129,7 @@ class FileTreeWidget extends Widget {
   cm: ContentsManager;
   dr: DocumentRegistry;
   commands: any;
+  toolbar: Toolbar;
   table: HTMLTableElement;
   tree: HTMLElement;
   controller: any;
@@ -146,8 +147,16 @@ class FileTreeWidget extends Widget {
     this.cm = lab.serviceManager.contents;
     this.dr = lab.docRegistry;
     this.commands = lab.commands;
+    this.toolbar = new Toolbar<Widget>();
     this.controller = {};
     this.selected = '';
+
+    this.toolbar.addClass('filetree-toolbar');
+
+    let layout = new PanelLayout();
+    layout.addWidget(this.toolbar);
+
+    this.layout = layout;
 
     let base = this.cm.get('');
     base.then(res => {
@@ -221,10 +230,6 @@ class FileTreeWidget extends Widget {
         delete this.controller[key];  
       }
     });
-  }
-
-  setSelected(path: string) {
-    this.selected = path;
   }
 
   buildTableContents(data: any, level: number, parent: any) {
@@ -387,12 +392,31 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   });
 
+  app.commands.addCommand('filetree:refresh', {
+    execute: () => {
+      Object.keys(widget.controller).forEach(key => {
+      let promise = app.serviceManager.contents.get(key);
+      promise.then(async res => {
+        if(res.last_modified > widget.controller[key]['last_modified']){
+          widget.controller[key]['last_modified'] = res.last_modified;
+          await widget.reload();
+          widget.restore();
+        }
+      });
+      promise.catch(reason => {
+        console.log(reason);
+        delete widget.controller[key];
+      })
+    });
+    }
+  })
+
   router.register({ command: 'filetree:navigate', pattern: Patterns.tree });
   router.register({ command: 'filetree:navigate', pattern: Patterns.workspace });
 
   app.commands.addCommand('filetree:set-context', {
     label: 'Need some Context',
-    execute: (args) => {
+    execute: args => {
       widget.selected = args['path'] as string;
     }
   }); 
@@ -433,9 +457,9 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   app.commands.addCommand('filetree:create-folder', {
     label: 'New Folder',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-NewFolderIcon',
-    execute: () => {
+    execute: args => {
       manager.newUntitled({
-        path: widget.selected,
+        path: args['path'] as string || widget.selected,
         type: 'directory'
       });
     }
@@ -503,21 +527,35 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     rank: 4
   })
 
+  let new_file = new ToolbarButton({
+    iconClassName: 'jp-NewFolderIcon jp-Icon jp-Icon-16',
+    onClick: () => {
+      app.commands.execute('filetree:create-folder', {'path': ''});
+    },
+    tooltip: 'New Folder'
+  });
+  widget.toolbar.addItem('new file', new_file);
+
+  let upload = new ToolbarButton({
+    iconClassName: 'jp-FileUploadIcon Icon jp-Icon jp-Icon-16',
+    onClick: () => {
+      console.log('upload');
+    },
+    tooltip: 'Upload'
+  });
+  widget.toolbar.addItem('upload', upload);
+
+  let refresh = new ToolbarButton({
+    iconClassName: 'jp-RefreshIcon jp-Icon jp-Icon-16',
+    onClick: () => {
+      app.commands.execute('filetree:refresh');
+    },
+    tooltip: 'Refresh'
+  });
+  widget.toolbar.addItem('refresh', refresh);
+
   setInterval(() => {
-    Object.keys(widget.controller).forEach(key => {
-      let promise = app.serviceManager.contents.get(key);
-      promise.then(async res => {
-        if(res.last_modified > widget.controller[key]['last_modified']){
-          widget.controller[key]['last_modified'] = res.last_modified;
-          await widget.reload();
-          widget.restore();
-        }
-      });
-      promise.catch(reason => {
-        console.log(reason);
-        delete widget.controller[key];
-      })
-    });
+    app.commands.execute('filetree:refresh');
   }, 10000);
 }
 
