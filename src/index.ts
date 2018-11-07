@@ -26,6 +26,10 @@ import {
   Widget, PanelLayout
 } from '@phosphor/widgets';
 
+import {
+  Uploader
+} from './upload';
+
 import '../style/index.css';
 
 namespace CommandIDs {
@@ -553,13 +557,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   });
   widget.toolbar.addItem('new file', new_file);
 
-  let upload = new ToolbarButton({
-    iconClassName: 'jp-FileUploadIcon Icon jp-Icon jp-Icon-16',
-    onClick: () => {
-      console.log('upload');
-    },
-    tooltip: 'Upload'
-  });
+  let upload = new Uploader({'manager': manager});
   widget.toolbar.addItem('upload', upload);
 
   let refresh = new ToolbarButton({

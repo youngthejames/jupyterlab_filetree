@@ -31,6 +31,7 @@
   "dependencies": {
     "@jupyterlab/application": "^0.19.1",
     "@jupyterlab/docmanager": "^0.19.1",
+    "@jupyterlab/filebrowser": "^0.19.3",
     "@jupyterlab/services": "^3.2.1"
   },
   "devDependencies": {
