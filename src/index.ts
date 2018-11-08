@@ -48,6 +48,8 @@ namespace CommandIDs {
   export const create_file = 'filetree:create-file';
 
   export const delete_op = 'filetree:delete';
+
+  export const download = 'filetree:download';
 }
 
 namespace Patterns {
@@ -302,6 +304,7 @@ class FileTreeWidget extends Widget {
       tr.className += ' filetree-folder';
     } else {
       var iconClass = this.dr.getFileTypesForPath(object.path);
+      tr.className += ' filetree-file';
       if (iconClass.length == 0)
         icon.className += this.dr.getFileType('text').iconClass;
       else
@@ -326,6 +329,18 @@ class FileTreeWidget extends Widget {
     tr.id = object.path;
 
     return tr;
+  }
+
+  download(path: string): Promise<void> {
+    return this.cm.getDownloadUrl(path).then(url => {
+      let element = document.createElement('a');
+      document.body.appendChild(element);
+      element.setAttribute('href', url);
+      element.setAttribute('download', '');
+      element.click();
+      document.body.removeChild(element);
+      return void 0;
+    });
   }
 
 }
@@ -524,12 +539,35 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
+  app.commands.addCommand(CommandIDs.download, {
+    label: 'Download',
+    iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-DownloadIcon',
+    execute: () => {
+      widget.download(widget.selected);
+    }
+  })
+
+  // everything context menu
   app.contextMenu.addItem({
     command: CommandIDs.rename,
     selector: '.filetree-item',
     rank: 3
   });
 
+  app.contextMenu.addItem({
+    command: CommandIDs.delete_op,
+    selector: '.filetree-item',
+    rank: 4
+  })
+
+  // files only context menu
+  app.contextMenu.addItem({
+    command: CommandIDs.download,
+    selector: '.filetree-file',
+    rank: 1
+  })
+
+  // folder only context menu
   app.contextMenu.addItem({
     command: CommandIDs.create_folder,
     selector: '.filetree-folder',
@@ -540,12 +578,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     command: CommandIDs.create_file,
     selector: '.filetree-folder',
     rank: 1
-  })
-
-  app.contextMenu.addItem({
-    command: CommandIDs.delete_op,
-    selector: '.filetree-item',
-    rank: 4
   })
 
   let new_file = new ToolbarButton({
