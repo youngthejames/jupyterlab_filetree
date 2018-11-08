@@ -202,6 +202,7 @@ class FileTreeWidget extends Widget {
       th.appendChild(document.createTextNode(el));
       headRow.appendChild(th);
     });
+    headRow.children[headRow.children.length - 1].className = 'modified';
     thead.appendChild(headRow);
     table.appendChild(thead);
 

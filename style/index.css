@@ -82,7 +82,8 @@
 }
 
 th {
-  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  border: var(--jp-border-width) solid var(--jp-border-color2);
+  border-left: none;
   font-size: var(--jp-ui-font-size0);
   font-weight: 600;
   letter-spacing: 1px;
@@ -91,6 +92,9 @@ th {
   text-transform: uppercase;
   overflow: hidden;
   white-space: nowrap;
+}
+th.modified {
+  border-right: none;
 }
 
 td {
