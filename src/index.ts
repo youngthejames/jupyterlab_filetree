@@ -374,12 +374,12 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
 
       var row_element = document.getElementById(row);
 
-      if(row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
+      if(row_element.nextElementSibling && row_element.nextElementSibling.id.startsWith(row)) { // next element in folder, already constructed
         var display = switchView(document.getElementById(row_element.nextElementSibling.id).style.display);
         widget.controller[row]['open'] = !(widget.controller[row]['open'])
         var open_flag = widget.controller[row]['open'];
         // open folder
-        while (row_element.nextElementSibling.id.startsWith(row)) {
+        while (row_element.nextElementSibling && row_element.nextElementSibling.id.startsWith(row)) {
           row_element = document.getElementById(row_element.nextElementSibling.id);
           // check if the parent folder is open
           if(!(open_flag) || widget.controller[PathExt.dirname(row_element.id)]['open']) 
@@ -445,8 +445,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
       promise.then(async res => {
         if(res.last_modified > widget.controller[key]['last_modified']){
           widget.controller[key]['last_modified'] = res.last_modified;
-          await widget.reload();
-          widget.restore();
+          await widget.refresh();
         }
       });
       promise.catch(reason => {
