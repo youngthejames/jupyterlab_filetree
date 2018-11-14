@@ -50,6 +50,8 @@ namespace CommandIDs {
   export const delete_op = 'filetree:delete';
 
   export const download = 'filetree:download';
+
+  export const upload = 'filetree:upload';
 }
 
 namespace Patterns {
@@ -149,7 +151,7 @@ class OpenDirectWidget extends Widget {
   }
 }
 
-class FileTreeWidget extends Widget {
+export class FileTreeWidget extends Widget {
   cm: ContentsManager;
   dr: DocumentRegistry;
   commands: any;
@@ -245,6 +247,11 @@ class FileTreeWidget extends Widget {
     }).catch(reasons => {
       console.log(reasons);
     });
+  }
+
+  refresh() {
+    this.reload();
+    this.restore();
   }
 
   updateController(oldPath: string, newPath: string) { // replace keys for renamed path
@@ -357,6 +364,8 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   let widget = new FileTreeWidget(app);
   restorer.add(widget, 'filetree-jupyterlab');
   app.shell.addToLeftArea(widget);
+
+  let uploader = new Uploader({'manager': manager, 'widget': widget});
 
   app.commands.addCommand(CommandIDs.toggle, {
     execute: args => {
@@ -548,6 +557,14 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
+  app.commands.addCommand(CommandIDs.upload, {
+    label: 'Upload',
+    iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-FileUploadIcon',
+    execute: () => {
+      uploader.contextClick(widget.selected);
+    }
+  });
+
   // everything context menu
   app.contextMenu.addItem({
     command: CommandIDs.rename,
@@ -581,6 +598,12 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     rank: 1
   })
 
+  app.contextMenu.addItem({
+    command: CommandIDs.upload,
+    selector: '.filetree-folder',
+    rank: 3
+  })
+
   let new_file = new ToolbarButton({
     iconClassName: 'jp-NewFolderIcon jp-Icon jp-Icon-16',
     onClick: () => {
@@ -590,8 +613,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   });
   widget.toolbar.addItem('new file', new_file);
 
-  let upload = new Uploader({'manager': manager});
-  widget.toolbar.addItem('upload', upload);
+  widget.toolbar.addItem('upload', uploader);
 
   let refresh = new ToolbarButton({
     iconClassName: 'jp-RefreshIcon jp-Icon jp-Icon-16',
