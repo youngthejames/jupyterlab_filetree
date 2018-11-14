@@ -1,7 +1,5 @@
 import { ToolbarButton, showErrorMessage, Dialog, showDialog } from '@jupyterlab/apputils';
 
-// import { FileBrowserModel } from '@jupyterlab/filebrowser';
-
 import { Contents } from '@jupyterlab/services';
 
 import { PageConfig, IChangedArgs } from '@jupyterlab/coreutils';
@@ -40,7 +38,6 @@ export class Uploader extends ToolbarButton {
   private _uploads: IUploadModel[] = [];
   private _uploadChanged = new Signal<this, IChangedArgs<IUploadModel>>(this);
 
-  //private fileBrowserModel: FileBrowserModel;
   private manager: IDocumentManager;
   private widget: FileTreeWidget;
   private context: string;
@@ -54,7 +51,6 @@ export class Uploader extends ToolbarButton {
       },
       tooltip: 'Upload Files'
     });
-    //this.fileBrowserModel = new FileBrowserModel({'manager': options.manager});
     this.manager = options.manager;
     this.widget = options.widget;
     this._input.onclick = this._onInputClicked;
