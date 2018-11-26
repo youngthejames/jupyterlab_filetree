@@ -52,6 +52,8 @@ namespace CommandIDs {
   export const download = 'filetree:download';
 
   export const upload = 'filetree:upload';
+
+  export const move = 'filetree:move';
 }
 
 namespace Patterns {
@@ -232,8 +234,9 @@ export class FileTreeWidget extends Widget {
 
   restore() { // restore expansion prior to rebuild
     let array: Promise<any>[] = [];
+    console.log(this.controller);
     Object.keys(this.controller).forEach(key => {
-      if(this.controller[key]['open'] && key !== '') {
+      if(this.controller[key]['open'] && (key !== '')) {
         var promise = this.cm.get(key);
         promise.catch(res => { console.log(res); });
         array.push(promise);
@@ -272,14 +275,18 @@ export class FileTreeWidget extends Widget {
       let entry = data[sorted_entry[1]];
       let tr = this.createTreeElement(entry, level);
 
+      tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': entry.path}); }
+      tr.draggable = true;
+      tr.ondragstart = function(event) {event.dataTransfer.setData('Path', tr.id); }
+
       if (entry.type === 'directory') {
         tr.onclick = function() { commands.execute(CommandIDs.toggle, {'row': entry.path, 'level': level+1}); }
-        tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': entry.path}); }
+        tr.ondrop = function(event) { commands.execute('filetree:move', {'from': event.dataTransfer.getData('Path'), 'to': entry.path}); }
+        tr.ondragover = function(event) {event.preventDefault();}
         if (!(entry.path in this.controller))
           this.controller[entry.path] = {'last_modified': entry.last_modified, 'open':false};
       } else {
         tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
-        tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': entry.path}); }
       }
 
       if(level === 1)
@@ -445,7 +452,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         promise.then(async res => {
           if(res.last_modified > widget.controller[key]['last_modified']){
             widget.controller[key]['last_modified'] = res.last_modified;
-            await widget.refresh();
           }
         });
         promise.catch(reason => {
@@ -453,6 +459,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
           delete widget.controller[key];
         })
       });
+      widget.refresh()
     }
   })
 
@@ -467,9 +474,13 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         element.className = element.className.replace('selected', '');
       }
       widget.selected = args['path'] as string;
-      document.getElementById(widget.selected).className += ' selected';
+      if(widget.selected != '')
+        document.getElementById(widget.selected).className += ' selected';
     }
   }); 
+
+  // remove context highlight on context menu exit
+  document.ondblclick = function() { app.commands.execute(CommandIDs.set_context, {'path': ''}); }
 
   app.commands.addCommand(CommandIDs.rename, {
     label: 'Rename',
@@ -542,7 +553,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     label: 'Delete',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-CloseIcon',
     execute: () => {
-      let message = `Are you sure you want to delete: ${widget.selected} ?`;
+      let message = 'Are you sure you want to delete: ${widget.selected} ?';
       showDialog({
         title: 'Delete',
         body: message,
@@ -572,6 +583,28 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
       uploader.contextClick(widget.selected);
     }
   });
+
+  app.commands.addCommand(CommandIDs.move, {
+    label: 'Move',
+    execute: args => {
+      let from = args['from'] as string;
+      let to = args['to'] as string;
+      let file_name = PathExt.basename(from);
+      let message = 'Are you sure you want to move ' + file_name + '?';
+      showDialog({
+        title: 'Move',
+        body: message,
+        buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: 'MOVE' })]
+      }).then(async (result: any) => {
+        if (result.button.accept) {
+          let new_path = PathExt.join(to, file_name)
+          renameFile(manager, from, new_path);
+          widget.updateController(from, new_path);
+          widget.refresh();
+        }
+      });
+    }
+  })
 
   // everything context menu
   app.contextMenu.addItem({
