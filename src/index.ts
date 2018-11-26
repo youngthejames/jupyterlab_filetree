@@ -441,18 +441,18 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   app.commands.addCommand(CommandIDs.refresh, {
     execute: () => {
       Object.keys(widget.controller).forEach(key => {
-      let promise = app.serviceManager.contents.get(key);
-      promise.then(async res => {
-        if(res.last_modified > widget.controller[key]['last_modified']){
-          widget.controller[key]['last_modified'] = res.last_modified;
-          await widget.refresh();
-        }
+        let promise = app.serviceManager.contents.get(key);
+        promise.then(async res => {
+          if(res.last_modified > widget.controller[key]['last_modified']){
+            widget.controller[key]['last_modified'] = res.last_modified;
+            await widget.refresh();
+          }
+        });
+        promise.catch(reason => {
+          console.log(reason);
+          delete widget.controller[key];
+        })
       });
-      promise.catch(reason => {
-        console.log(reason);
-        delete widget.controller[key];
-      })
-    });
     }
   })
 
@@ -462,7 +462,12 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   app.commands.addCommand(CommandIDs.set_context, {
     label: 'Need some Context',
     execute: args => {
+      if(widget.selected != '') {
+        let element = document.getElementById(widget.selected)
+        element.className = element.className.replace('selected', '');
+      }
       widget.selected = args['path'] as string;
+      document.getElementById(widget.selected).className += ' selected';
     }
   }); 
 
@@ -496,17 +501,19 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         widget.updateController(current_id, new_path);
         text_area.innerHTML = newName;
       });
+      widget.refresh();
     }
   })
 
   app.commands.addCommand(CommandIDs.create_folder, {
     label: 'New Folder',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-NewFolderIcon',
-    execute: args => {
-      manager.newUntitled({
+    execute: async args => {
+      await manager.newUntitled({
         path: args['path'] as string || widget.selected,
         type: 'directory'
       });
+      widget.refresh();
     }
   })
 
@@ -525,6 +532,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
           manager.createNew(new_file);
           if(!(widget.selected in widget.controller) || widget.controller[widget.selected]['open'] == false)
             app.commands.execute(CommandIDs.toggle, {'row': widget.selected, 'level': new_file.split('/').length});
+          widget.refresh();
         }
       });
     }
@@ -539,10 +547,11 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         title: 'Delete',
         body: message,
         buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: 'DELETE' })]
-      }).then((result: any) => {
+      }).then(async (result: any) => {
         if (result.button.accept) {
-          manager.deleteFile(widget.selected);
+          await manager.deleteFile(widget.selected);
           widget.updateController(widget.selected, '');
+          widget.refresh();
         }
       });
     }
@@ -623,9 +632,9 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   });
   widget.toolbar.addItem('refresh', refresh);
 
-  setInterval(() => {
-    app.commands.execute(CommandIDs.refresh);
-  }, 10000);
+  // setInterval(() => {
+  //   app.commands.execute(CommandIDs.refresh);
+  // }, 10000);
 }
 
 const extension: JupyterLabPlugin<void> = {
