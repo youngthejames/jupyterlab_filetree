@@ -234,7 +234,6 @@ export class FileTreeWidget extends Widget {
 
   restore() { // restore expansion prior to rebuild
     let array: Promise<any>[] = [];
-    console.log(this.controller);
     Object.keys(this.controller).forEach(key => {
       if(this.controller[key]['open'] && (key !== '')) {
         var promise = this.cm.get(key);
