@@ -510,8 +510,8 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         renameFile(manager, current_id, new_path);
         widget.updateController(current_id, new_path);
         text_area.innerHTML = newName;
+        widget.refresh();
       });
-      widget.refresh();
     }
   })
 
