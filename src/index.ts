@@ -19,7 +19,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  showErrorMessage, showDialog, Dialog, Toolbar, ToolbarButton
+  showErrorMessage, showDialog, Dialog, Toolbar, ToolbarButton, Clipboard
 } from '@jupyterlab/apputils';
 
 import {
@@ -54,6 +54,8 @@ namespace CommandIDs {
   export const upload = 'filetree:upload';
 
   export const move = 'filetree:move';
+
+  export const copy_path = 'filetree:copy_path';
 }
 
 namespace Patterns {
@@ -605,6 +607,14 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     }
   })
 
+  app.commands.addCommand(CommandIDs.copy_path, {
+    label: 'Copy Path',
+    iconClass: widget.dr.getFileType('text').iconClass,
+    execute: () => {
+      Clipboard.copyToSystem(widget.selected);
+    }
+  })
+
   // everything context menu
   app.contextMenu.addItem({
     command: CommandIDs.rename,
@@ -616,6 +626,12 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     command: CommandIDs.delete_op,
     selector: '.filetree-item',
     rank: 4
+  })
+
+  app.contextMenu.addItem({
+    command: CommandIDs.copy_path,
+    selector: '.filetree-item',
+    rank: 5
   })
 
   // files only context menu
