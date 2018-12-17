@@ -205,10 +205,11 @@ export class FileTreeWidget extends Widget {
     let headRow = document.createElement('tr');
     headers.forEach(function(el: string) {
       let th = document.createElement('th');
+      th.className = 'filetree-header';
       th.appendChild(document.createTextNode(el));
       headRow.appendChild(th);
     });
-    headRow.children[headRow.children.length - 1].className = 'modified';
+    headRow.children[headRow.children.length - 1].className += ' modified';
     thead.appendChild(headRow);
     table.appendChild(thead);
 

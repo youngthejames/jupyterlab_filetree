@@ -71,6 +71,16 @@
   padding-right: 10px;
 }
 
+.filetree-item {
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
+  text-align: center;
+  padding-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
 .filetree-item:hover {
   cursor: pointer;
   background-color: var(--jp-input-hover-background);
@@ -81,7 +91,10 @@
   background: var(--jp-brand-color1);
 }
 
-th {
+.filetree-header {
+  -webkit-user-select: none;  /* Chrome all / Safari all */
+  -moz-user-select: none;     /* Firefox all */
+  -ms-user-select: none;      /* IE 10+ */
   border: var(--jp-border-width) solid var(--jp-border-color2);
   border-left: none;
   font-size: var(--jp-ui-font-size0);
@@ -93,20 +106,6 @@ th {
   overflow: hidden;
   white-space: nowrap;
 }
-th.modified {
+.filetree-header.modified {
   border-right: none;
-}
-
-td {
-  -webkit-user-select: none;  /* Chrome all / Safari all */
-  -moz-user-select: none;     /* Firefox all */
-  -ms-user-select: none;      /* IE 10+ */
-  text-align: center;
-  padding-top: 2px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-th, tr {
-  font-weight: normal;
 }
