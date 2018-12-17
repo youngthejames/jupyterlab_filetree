@@ -276,18 +276,22 @@ export class FileTreeWidget extends Widget {
       let entry = data[sorted_entry[1]];
       let tr = this.createTreeElement(entry, level);
 
-      tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': entry.path}); }
+      let path = entry.path;
+      if(path.startsWith('/'))
+        path = path.slice(1);
+
+      tr.oncontextmenu = function() { commands.execute(CommandIDs.set_context, {'path': path}); }
       tr.draggable = true;
       tr.ondragstart = function(event) {event.dataTransfer.setData('Path', tr.id); }
 
       if (entry.type === 'directory') {
-        tr.onclick = function() { commands.execute(CommandIDs.toggle, {'row': entry.path, 'level': level+1}); }
-        tr.ondrop = function(event) { commands.execute('filetree:move', {'from': event.dataTransfer.getData('Path'), 'to': entry.path}); }
+        tr.onclick = function() { commands.execute(CommandIDs.toggle, {'row': path, 'level': level+1}); }
+        tr.ondrop = function(event) { commands.execute('filetree:move', {'from': event.dataTransfer.getData('Path'), 'to': path}); }
         tr.ondragover = function(event) {event.preventDefault();}
-        if (!(entry.path in this.controller))
-          this.controller[entry.path] = {'last_modified': entry.last_modified, 'open':false};
+        if (!(path in this.controller))
+          this.controller[path] = {'last_modified': entry.last_modified, 'open':false};
       } else {
-        tr.onclick = function() { commands.execute('docmanager:open', {'path': entry.path}); } 
+        tr.onclick = function() { commands.execute('docmanager:open', {'path': path}); } 
       }
 
       if(level === 1)
@@ -387,7 +391,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         widget.controller[row]['open'] = !(widget.controller[row]['open'])
         var open_flag = widget.controller[row]['open'];
         // open folder
-        while (row_element.nextElementSibling && row_element.nextElementSibling.id.startsWith(row)) {
+        while (row_element.nextElementSibling && row_element.nextElementSibling.id.startsWith(row + '/')) {
           row_element = document.getElementById(row_element.nextElementSibling.id);
           // check if the parent folder is open
           if(!(open_flag) || widget.controller[PathExt.dirname(row_element.id)]['open']) 
@@ -472,11 +476,15 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     execute: args => {
       if(widget.selected != '') {
         let element = document.getElementById(widget.selected)
-        element.className = element.className.replace('selected', '');
+        if(element != null)
+          element.className = element.className.replace('selected', '');
       }
       widget.selected = args['path'] as string;
-      if(widget.selected != '')
-        document.getElementById(widget.selected).className += ' selected';
+      if(widget.selected != '') {
+        let element = document.getElementById(widget.selected)
+        if(element != null)
+          element.className += ' selected';
+      }
     }
   }); 
 
@@ -554,7 +562,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     label: 'Delete',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-CloseIcon',
     execute: () => {
-      let message = 'Are you sure you want to delete: ${widget.selected} ?';
+      let message = `Are you sure you want to delete: ${widget.selected} ?`;
       showDialog({
         title: 'Delete',
         body: message,
@@ -563,6 +571,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         if (result.button.accept) {
           await manager.deleteFile(widget.selected);
           widget.updateController(widget.selected, '');
+          app.commands.execute(CommandIDs.set_context, {'path': ''});
           widget.refresh();
         }
       });
