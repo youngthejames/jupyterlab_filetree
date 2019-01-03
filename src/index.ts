@@ -191,7 +191,7 @@ export class FileTreeWidget extends Widget {
     let base = this.cm.get('');
     base.then(res => {
       this.controller[''] = {'last_modified': res.last_modified, 'open':true};
-      var table = this.buildTable(['File Name', 'Last Modified'], res.content);
+      var table = this.buildTable(['Name', 'Size', 'Timestamp'], res.content);
       this.node.appendChild(table);
     });
   }
@@ -316,6 +316,7 @@ export class FileTreeWidget extends Widget {
     let tr = document.createElement('tr');
     let td = document.createElement('td');
     let td1 = document.createElement('td');
+    let td2 = document.createElement('td');
     tr.className = 'filetree-item';
 
     let icon = document.createElement('span');
@@ -332,21 +333,30 @@ export class FileTreeWidget extends Widget {
         icon.className += this.dr.getFileTypesForPath(object.path)[0].iconClass;
     }
     
+    // icon and name
     td.appendChild(icon);  
     let title = document.createElement('span');
     title.innerHTML = object.name;
-    title.className = 'filetree-text-span';
+    title.className = 'filetree-name-span';
     td.appendChild(title);
-    td.className = 'filetree-item-text'; 
+    td.className = 'filetree-item-name'; 
     td.style.setProperty('--indent', level + 'em');
 
+    // file size
+    let size = document.createElement('span');
+    size.innerHTML = fileSizeString(object.size);
+    td1.className = 'filetree-attribute';
+    td1.appendChild(size);
+
+    // last modified
     let date = document.createElement('span');
     date.innerHTML = Time.formatHuman(object.last_modified);
-    td1.className = 'filetree-date';
-    td1.appendChild(date);
+    td2.className = 'filetree-attribute';
+    td2.appendChild(date);
 
     tr.appendChild(td);
     tr.appendChild(td1);
+    tr.appendChild(td2);
     tr.id = object.path;
 
     return tr;
@@ -370,6 +380,22 @@ function switchView(mode: any) {
   if(mode == "none") return "";
   else return "none"
 }
+
+function fileSizeString(fileBytes: number) {
+    if(fileBytes == null)
+      return ''
+    if(fileBytes < 1024)
+      return fileBytes + ' B'
+
+    let i = -1;
+    let byteUnits = [' KB', ' MB', ' GB', ' TB'];
+    do {
+        fileBytes = fileBytes / 1024;
+        i++;
+    } while (fileBytes > 1024);
+
+    return Math.max(fileBytes, 0.1).toFixed(1) + byteUnits[i];
+};
 
 function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocumentManager, router: IRouter) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
@@ -496,8 +522,8 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     label: 'Rename',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-EditIcon',
     execute: () => {
-      let td = document.getElementById(widget.selected).getElementsByClassName('filetree-item-text')[0];
-      let text_area = td.getElementsByClassName('filetree-text-span')[0] as HTMLElement;
+      let td = document.getElementById(widget.selected).getElementsByClassName('filetree-item-name')[0];
+      let text_area = td.getElementsByClassName('filetree-name-span')[0] as HTMLElement;
       let original = text_area.innerHTML;
       let edit = document.createElement('input');
       edit.value = original;

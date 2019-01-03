@@ -59,14 +59,15 @@
 .filetree-head {
   width: 100%;
   border-spacing: 0px;
+  overflow: scroll;
 }
 
-.filetree-item-text {
+.filetree-item-name {
   padding-left: var(--indent);
   display: flex;
 }
 
-.filetree-date {
+.filetree-attribute {
   text-align: right;
   padding-right: 10px;
 }
