@@ -350,7 +350,7 @@ export class FileTreeWidget extends Widget {
 
     // last modified
     let date = document.createElement('span');
-    date.innerHTML = Time.formatHuman(object.last_modified);
+    date.innerHTML = Time.format(object.last_modified);
     td2.className = 'filetree-attribute';
     td2.appendChild(date);
 
