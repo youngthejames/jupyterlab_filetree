@@ -191,7 +191,7 @@ export class FileTreeWidget extends Widget {
     let base = this.cm.get('');
     base.then(res => {
       this.controller[''] = {'last_modified': res.last_modified, 'open':true};
-      var table = this.buildTable(['Name', 'Size', 'Timestamp'], res.content);
+      var table = this.buildTable(['Name', 'Size', 'Timestamp', 'Permission'], res.content);
       this.node.appendChild(table);
     });
   }
@@ -317,6 +317,7 @@ export class FileTreeWidget extends Widget {
     let td = document.createElement('td');
     let td1 = document.createElement('td');
     let td2 = document.createElement('td');
+    let td3 = document.createElement('td');
     tr.className = 'filetree-item';
 
     let icon = document.createElement('span');
@@ -354,9 +355,26 @@ export class FileTreeWidget extends Widget {
     td2.className = 'filetree-attribute';
     td2.appendChild(date);
 
+    // check permissions
+    let perm = document.createElement('span');
+    td3.className = 'filetree-attribute';
+    if(object.writable)
+      perm.innerHTML = 'Writable';
+    else {
+      this.cm.get(object.path)
+      .then(res => {
+        perm.innerHTML = 'Readable';
+      })
+      .catch(err => {
+        perm.innerHTML = 'Locked';
+      });
+    }
+    td3.appendChild(perm);
+
     tr.appendChild(td);
     tr.appendChild(td1);
     tr.appendChild(td2);
+    tr.appendChild(td3);
     tr.id = object.path;
 
     return tr;
