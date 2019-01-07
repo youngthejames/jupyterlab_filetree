@@ -2,7 +2,7 @@
 
 File Tree View as side bar tool
 
-![npm](https://img.shields.io/npm/v/jupyterlab_filetree.svg)](https://www.npmjs.com/package/jupyterlab_filetree)
+[![npm](https://img.shields.io/npm/v/jupyterlab_filetree.svg)](https://www.npmjs.com/package/jupyterlab_filetree)
 
 ![alt text](https://github.com/youngthejames/jupyterlab_filetree/blob/master/images/screenshot.png "File Tree Screenshot")
 
