@@ -34,7 +34,6 @@
 
 .filetree-toolbar {
   padding: 0px;
-  justify-content: space-evenly;
   border-bottom: none;
   height: auto;
   margin: var(--jp-toolbar-header-margin);

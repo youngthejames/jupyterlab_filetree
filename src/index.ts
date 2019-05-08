@@ -31,6 +31,7 @@ import {
 } from './upload';
 
 import '../style/index.css';
+const BASEPATH = '';
 
 namespace CommandIDs {
   export const navigate = 'filetree:navigate';
@@ -188,7 +189,7 @@ export class FileTreeWidget extends Widget {
 
     this.layout = layout;
 
-    let base = this.cm.get('');
+    let base = this.cm.get(BASEPATH + '');
     base.then(res => {
       this.controller[''] = {'last_modified': res.last_modified, 'open':true};
       var table = this.buildTable(['Name', 'Size', 'Timestamp', 'Permission'], res.content);
@@ -227,26 +228,25 @@ export class FileTreeWidget extends Widget {
     let tbody = this.table.createTBody();
     tbody.id = 'filetree-body';
     this.tree = tbody;
-    let base = this.cm.get('');
+    let base = this.cm.get(BASEPATH + '');
     base.then(res => {
       this.buildTableContents(res.content, 1, '');
     });
     this.table.appendChild(tbody);
-    return base;
   }
 
   restore() { // restore expansion prior to rebuild
     let array: Promise<any>[] = [];
     Object.keys(this.controller).forEach(key => {
       if(this.controller[key]['open'] && (key !== '')) {
-        var promise = this.cm.get(key);
+        var promise = this.cm.get(BASEPATH + key);
         promise.catch(res => { console.log(res); });
         array.push(promise);
       }
     });
     Promise.all(array).then(results => {
       for(var r in results) {
-        var row_element = document.getElementById(results[r].path);
+        var row_element = document.getElementById(results[r].path.replace(BASEPATH, ''));
         this.buildTableContents(results[r].content, 1+results[r].path.split('/').length, row_element);
       }
     }).catch(reasons => {
@@ -292,7 +292,7 @@ export class FileTreeWidget extends Widget {
         if (!(path in this.controller))
           this.controller[path] = {'last_modified': entry.last_modified, 'open':false};
       } else {
-        tr.onclick = function() { commands.execute('docmanager:open', {'path': path}); } 
+        tr.onclick = function() { commands.execute('docmanager:open', {'path': BASEPATH + path}); } 
       }
 
       if(level === 1)
@@ -381,7 +381,7 @@ export class FileTreeWidget extends Widget {
   }
 
   download(path: string): Promise<void> {
-    return this.cm.getDownloadUrl(path).then(url => {
+    return this.cm.getDownloadUrl(BASEPATH + path).then(url => {
       let element = document.createElement('a');
       document.body.appendChild(element);
       element.setAttribute('href', url);
@@ -443,7 +443,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
             row_element.style.display = display;
         }
       } else { // if children elements don't exist yet
-        let base = app.serviceManager.contents.get(row);
+        let base = app.serviceManager.contents.get(BASEPATH + row);
         base.then(res => {
           widget.buildTableContents(res.content, level, row_element);
           widget.controller[row] = {'last_modified': res.last_modified, 'open':true};
@@ -498,7 +498,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   app.commands.addCommand(CommandIDs.refresh, {
     execute: () => {
       Object.keys(widget.controller).forEach(key => {
-        let promise = app.serviceManager.contents.get(key);
+        let promise = app.serviceManager.contents.get(BASEPATH + key);
         promise.then(async res => {
           if(res.last_modified > widget.controller[key]['last_modified']){
             widget.controller[key]['last_modified'] = res.last_modified;
@@ -562,7 +562,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         }
         let current_id = widget.selected;
         let new_path = PathExt.join(PathExt.dirname(widget.selected), newName);
-        renameFile(manager, current_id, new_path);
+        renameFile(manager, BASEPATH + current_id, BASEPATH + new_path);
         widget.updateController(current_id, new_path);
         text_area.innerHTML = newName;
         widget.refresh();
@@ -575,7 +575,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-NewFolderIcon',
     execute: async args => {
       await manager.newUntitled({
-        path: args['path'] as string || widget.selected,
+        path: BASEPATH + (args['path'] as string || widget.selected),
         type: 'directory'
       });
       widget.refresh();
@@ -594,7 +594,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
       }).then((result: any) => {
         if (result.button.label === 'CREATE') {
           let new_file = PathExt.join(widget.selected, result.value);
-          manager.createNew(new_file);
+          manager.createNew(BASEPATH + new_file);
           if(!(widget.selected in widget.controller) || widget.controller[widget.selected]['open'] == false)
             app.commands.execute(CommandIDs.toggle, {'row': widget.selected, 'level': new_file.split('/').length});
           widget.refresh();
@@ -614,7 +614,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
         buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: 'DELETE' })]
       }).then(async (result: any) => {
         if (result.button.accept) {
-          await manager.deleteFile(widget.selected);
+          await manager.deleteFile(BASEPATH + widget.selected);
           widget.updateController(widget.selected, '');
           app.commands.execute(CommandIDs.set_context, {'path': ''});
           widget.refresh();
@@ -653,7 +653,7 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
       }).then(async (result: any) => {
         if (result.button.accept) {
           let new_path = PathExt.join(to, file_name)
-          renameFile(manager, from, new_path);
+          renameFile(manager, BASEPATH + from, BASEPATH + new_path);
           widget.updateController(from, new_path);
           widget.refresh();
         }
@@ -712,6 +712,20 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     command: CommandIDs.upload,
     selector: '.filetree-folder',
     rank: 3
+  })
+
+  // no target context menu
+  app.contextMenu.addItem({
+    command: CommandIDs.upload,
+    selector: '.jp-filetreeWidget',
+    rank: 2
+  })
+
+  app.contextMenu.addItem({
+    command: CommandIDs.create_folder,
+    args: {'path': ''},
+    selector: '.jp-filetreeWidget',
+    rank: 1
   })
 
   let new_file = new ToolbarButton({
