@@ -33,7 +33,11 @@
     "@jupyterlab/docmanager": "^0.19.1",
     "@jupyterlab/filebrowser": "^0.19.3",
     "@jupyterlab/services": "^3.2.1",
-    "@phosphor/algorithm": "^1.1.2"
+    "@phosphor/algorithm": "^1.1.2",
+    "@types/file-saver": "^2.0.0",
+    "@types/jszip": "^3.1.5",
+    "file-saver": "^2.0.1",
+    "jszip": "^3.2.1"
   },
   "devDependencies": {
     "rimraf": "^2.6.1",

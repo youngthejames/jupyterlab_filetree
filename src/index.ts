@@ -30,6 +30,10 @@ import {
   Uploader
 } from './upload';
 
+import { saveAs } from 'file-saver';
+
+import * as JSZip from 'jszip';
+
 import '../style/index.css';
 const BASEPATH = '';
 
@@ -134,23 +138,15 @@ namespace Private {
 }
 
 class OpenDirectWidget extends Widget {
-  /**
-   * Construct a new open file widget.
-   */
+
   constructor() {
     super({ node: Private.createOpenNode() });
   }
 
-  /**
-   * Get the value of the widget.
-   */
   getValue(): string {
     return this.inputNode.value;
   }
 
-  /**
-   * Get the input text node.
-   */
   get inputNode(): HTMLInputElement {
     return this.node.getElementsByTagName('input')[0] as HTMLInputElement;
   }
@@ -380,16 +376,42 @@ export class FileTreeWidget extends Widget {
     return tr;
   }
 
-  download(path: string): Promise<void> {
-    return this.cm.getDownloadUrl(BASEPATH + path).then(url => {
-      let element = document.createElement('a');
-      document.body.appendChild(element);
-      element.setAttribute('href', url);
-      element.setAttribute('download', '');
-      element.click();
-      document.body.removeChild(element);
-      return void 0;
+  async download(path: string, folder: boolean): Promise<any> {
+    if(folder) {
+      let zip = new JSZip();
+      await this.wrapFolder(zip, path); // folder packing
+      // generate and save zip, reset path
+      path = PathExt.basename(path);
+      writeZipFile(zip, path);
+    } else {
+      return this.cm.getDownloadUrl(BASEPATH + path).then(url => {
+        let element = document.createElement('a');
+        document.body.appendChild(element);
+        element.setAttribute('href', url);
+        element.setAttribute('download', '');
+        element.click();
+        document.body.removeChild(element);
+        return void 0;
+      });
+    }
+  }
+
+  async wrapFolder(zip: JSZip, path: string) {
+    let base = this.cm.get(BASEPATH + path);
+    let next = base.then(async res => {
+      if(res.type == 'directory') {
+        console.log('New Folder: ' + res.name);
+        let new_folder = zip.folder(res.name);
+        for(let c in res.content){
+          await this.wrapFolder(new_folder, res.content[c].path);
+        }
+      } else {
+        console.log("Upload: " + res.name);
+        zip.file(res.name, res.content);
+        console.log(res.content); // need to wait to pull content
+      }
     });
+    await next;
   }
 
 }
@@ -414,6 +436,12 @@ function fileSizeString(fileBytes: number) {
 
     return Math.max(fileBytes, 0.1).toFixed(1) + byteUnits[i];
 };
+
+function writeZipFile(zip: JSZip, path: string){
+  zip.generateAsync({type: 'blob'}).then(content => {
+    saveAs(content, PathExt.basename(path));
+  });
+}
 
 function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocumentManager, router: IRouter) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
@@ -626,8 +654,8 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   app.commands.addCommand(CommandIDs.download, {
     label: 'Download',
     iconClass: 'p-Menu-itemIcon jp-MaterialIcon jp-DownloadIcon',
-    execute: () => {
-      widget.download(widget.selected);
+    execute: args => {
+      widget.download(widget.selected, args['folder'] as boolean || false);
     }
   })
 
@@ -712,6 +740,13 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     command: CommandIDs.upload,
     selector: '.filetree-folder',
     rank: 3
+  })
+
+  app.contextMenu.addItem({
+    command: CommandIDs.download,
+    args: {'folder': true},
+    selector: '.filetree-folder',
+    rank: 1
   })
 
   // no target context menu
