@@ -1,5 +1,5 @@
 import {
-  JupyterLab, JupyterLabPlugin, ILayoutRestorer, IRouter
+  JupyterFrontEnd, JupyterFrontEndPlugin, ILayoutRestorer, IRouter
 } from '@jupyterlab/application';
 
 import {
@@ -19,7 +19,7 @@ import {
 } from '@jupyterlab/coreutils';
 
 import {
-  showErrorMessage, showDialog, Dialog, Toolbar, ToolbarButton, Clipboard
+  showErrorMessage, showDialog, Dialog, Toolbar, ToolbarButton, Clipboard, IWindowResolver
 } from '@jupyterlab/apputils';
 
 import {
@@ -162,7 +162,7 @@ export class FileTreeWidget extends Widget {
   controller: any;
   selected: string;
 
-  constructor(lab: JupyterLab) {
+  constructor(lab: JupyterFrontEnd) {
     super();
 
     this.id = 'filetree-jupyterlab';
@@ -443,12 +443,12 @@ function writeZipFile(zip: JSZip, path: string){
   });
 }
 
-function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocumentManager, router: IRouter) {
+function activate(app: JupyterFrontEnd, paths: JupyterFrontEnd.IPaths, resolver: IWindowResolver, restorer: ILayoutRestorer, manager: IDocumentManager, router: IRouter) {
   console.log('JupyterLab extension jupyterlab_filetree is activated!');
 
   let widget = new FileTreeWidget(app);
   restorer.add(widget, 'filetree-jupyterlab');
-  app.shell.addToLeftArea(widget);
+  app.shell.add(widget,'left');
 
   let uploader = new Uploader({'manager': manager, 'widget': widget});
 
@@ -486,27 +486,25 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
       const workspaceMatch = router.current.path.match(Patterns.workspace);
       const match = treeMatch || workspaceMatch;
       const path = decodeURI(match[1]);
-      const { page, workspaces } = app.info.urls;
-      const workspace = PathExt.basename(app.info.workspace);
+      // const { page, workspaces } = app.info.urls;
+      const workspace = PathExt.basename(resolver.name);
       const url =
-        (workspaceMatch ? URLExt.join(workspaces, workspace) : page) +
+        (workspaceMatch ? URLExt.join(paths.urls.workspaces, workspace) : paths.urls.app) +
         router.current.search +
         router.current.hash;
-        const silent = true;
 
-      // Silently remove the tree portion of the URL leaving the rest intact.
-      router.navigate(url, { silent });
+      router.navigate(url);
 
       try {
-        var paths: string[] = [];
+        var tree_paths: string[] = [];
         var temp: string[] = path.split('/');
         var current: string = '';
         for(var t in temp) {
           current += (current == '') ? temp[t] : '/' + temp[t];
-          paths.push(current);
+          tree_paths.push(current);
         }
         let array: Promise<any>[] = [];
-        paths.forEach(key => {
+        tree_paths.forEach(key => {
           array.push(app.serviceManager.contents.get(key));
         });
         Promise.all(array).then(results => {
@@ -749,20 +747,6 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
     rank: 1
   })
 
-  // no target context menu
-  app.contextMenu.addItem({
-    command: CommandIDs.upload,
-    selector: '.jp-filetreeWidget',
-    rank: 2
-  })
-
-  app.contextMenu.addItem({
-    command: CommandIDs.create_folder,
-    args: {'path': ''},
-    selector: '.jp-filetreeWidget',
-    rank: 1
-  })
-
   let new_file = new ToolbarButton({
     iconClassName: 'jp-NewFolderIcon jp-Icon jp-Icon-16',
     onClick: () => {
@@ -788,10 +772,10 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer, manager: IDocument
   // }, 10000);
 }
 
-const extension: JupyterLabPlugin<void> = {
+const extension: JupyterFrontEndPlugin<void> = {
   id: 'jupyterlab_filetree',
   autoStart: true,
-  requires: [ILayoutRestorer, IDocumentManager, IRouter],
+  requires: [JupyterFrontEnd.IPaths, IWindowResolver, ILayoutRestorer, IDocumentManager, IRouter],
   activate: activate
 };
 
