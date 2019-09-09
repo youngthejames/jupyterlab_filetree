@@ -5,10 +5,10 @@
   --filetree-icon: var(--filetree-icon-dark);
 }
 
-[data-theme-light="true"] .filetree-icon {
+[data-jp-theme-light="true"] .filetree-icon {
   --filetree-icon: var(--filetree-icon-light);
 }
-[data-theme-light="false"] .filetree-icon {
+[data-jp-theme-light="false"] .filetree-icon {
   --filetree-icon: var(--filetree-icon-dark);
 }
 
