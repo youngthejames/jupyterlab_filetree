@@ -166,7 +166,6 @@ export class FileTreeWidget extends Widget {
               basepath: string = '',
               id: string = 'jupyterlab-filetree') {
     super();
-
     this.id = id;
     this.title.iconClass = 'filetree-icon';
     this.title.caption= 'File Tree';
@@ -465,7 +464,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   router: IRouter){
 
 
-  let widget = new FileTreeWidget(app, basepath);
+  let widget = new FileTreeWidget(app, basepath, id);
   restorer.add(widget, id);
   app.shell.add(widget, side);
 
