@@ -464,11 +464,11 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   router: IRouter){
 
 
-  let widget = new FileTreeWidget(app, basepath, id);
-  restorer.add(widget, id);
+  let widget = new FileTreeWidget(app, basepath, id || 'jupyterlab-filetree');
+  restorer.add(widget, id || 'jupyterlab-filetree');
   app.shell.add(widget, side);
 
-  let uploader = new Uploader({'manager': manager, 'widget': widget, basepath: basepath, filetree_id: id});
+  let uploader = new Uploader({'manager': manager, 'widget': widget, basepath: basepath, filetree_id: id || 'jupyterlab-filetree'});
 
   app.commands.addCommand((CommandIDs.toggle + ':' + id), {
     execute: args => {
