@@ -41,7 +41,8 @@ export class Uploader extends ToolbarButton {
   private manager: IDocumentManager;
   private widget: FileTreeWidget;
   private context: string;
-  
+  private basepath: string;
+
   constructor(options: any) {
     super({
       iconClassName: 'jp-FileUploadIcon jp-Icon jp-Icon-16',
@@ -51,12 +52,14 @@ export class Uploader extends ToolbarButton {
       },
       tooltip: 'Upload Files'
     });
+    this.basepath = options.widget.basepath;
     this.manager = options.manager;
     this.widget = options.widget;
     this._input.onclick = this._onInputClicked;
     this.context = '';
     this._input.onchange = this._onInputChanged;
     this.addClass('filetree-upload');
+    this.addClass(options.widget.filetree_id);
   }
 
   contextClick(path: string) {
@@ -175,7 +178,7 @@ export class Uploader extends ToolbarButton {
         chunk,
         content
       };
-      return await this.manager.services.contents.save(path, model);
+      return await this.manager.services.contents.save(this.basepath + path, model);
     };
 
     if (!chunked) {
