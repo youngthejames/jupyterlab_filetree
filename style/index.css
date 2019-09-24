@@ -12,7 +12,7 @@
   --filetree-icon: var(--filetree-icon-dark);
 }
 
-#filetree-jupyterlab {
+.jp-filetreeWidget {
   background: var(--jp-layout-color1);
   overflow: scroll;
   color: var(--jp-ui-font-color1);
@@ -21,7 +21,7 @@
   font-size: var(--jp-ui-font-size1);
 }
 
-#filetree-jupyterlab header {
+.jp-filetreeWidget header {
   border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
   flex: 0 0 auto;
   font-size: var(--jp-ui-font-size0);
