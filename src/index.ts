@@ -253,7 +253,7 @@ export class FileTreeWidget extends Widget {
     });
     Promise.all(array).then((results) => {
       for (const r in results) {
-        const row_element = this.node.querySelector("[id='" + results[r].path.replace(this.basepath, "") + "']");
+        const row_element = this.node.querySelector("[id='" + btoa(results[r].path.replace(this.basepath, "")) + "']");
         this.buildTableContents(results[r].content, 1 + results[r].path.split("/").length, row_element);
       }
     }).catch((reasons) => {
@@ -296,15 +296,30 @@ export class FileTreeWidget extends Widget {
       tr.ondragstart = (event) => {event.dataTransfer.setData("Path", tr.id); };
 
       if (entry.type === "directory") {
-        tr.onclick = () => { commands.execute((CommandIDs.select + ":" + this.id), {path: path}); };
-        tr.ondblclick = () => { commands.execute((CommandIDs.toggle + ":" + this.id), {row: path, level: level + 1}); };
+        tr.onclick = (event) => {
+          event.stopPropagation(); 
+          event.preventDefault();
+          if (this.selected === path){
+            commands.execute((CommandIDs.toggle + ":" + this.id), {row: path, level: level + 1});
+          } else {
+            commands.execute((CommandIDs.select + ":" + this.id), {path: path});
+          }
+        };
         tr.ondrop = (event) => { commands.execute("filetree:move", {from: event.dataTransfer.getData("Path"), to: path}); };
         tr.ondragover = (event) => {event.preventDefault(); };
         if (!(path in this.controller)) {
           this.controller[path] = {last_modified: entry.last_modified, open: false};
         }
       } else {
-        tr.onclick = () => { commands.execute((CommandIDs.select + ":" + this.id), {path: path}); };
+        tr.onclick = (event) => {
+          event.stopPropagation(); 
+          event.preventDefault();
+          if (this.selected === path){
+            commands.execute((CommandIDs.rename + ":" + this.id));
+          } else {
+            commands.execute((CommandIDs.select + ":" + this.id), {path: path});
+          }
+        };
         tr.ondblclick = () => { commands.execute("docmanager:open", {path: this.basepath + path}); };
       }
 
@@ -547,7 +562,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
         Promise.all(array).then((results) => {
           for (const r in results) {
             if (results[r].type === "directory") {
-              const row_element = widget.node.querySelector("[id='" + results[r].path + "']");
+              const row_element = widget.node.querySelector("[id='" + btoa(results[r].path) + "']");
               widget.buildTableContents(results[r].content, 1 + results[r].path.split("/").length, row_element);
             }
           }
@@ -619,11 +634,12 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   });
 
   // remove context highlight on context menu exit
-  widget.node.ondblclick = () => { app.commands.execute((CommandIDs.set_context + ":" + widget.id), {path: ""}); };
+  document.ondblclick = () => { app.commands.execute((CommandIDs.set_context + ":" + widget.id), {path: ""}); };
+  widget.node.onclick = (event) => { app.commands.execute((CommandIDs.select + ":" + widget.id), {path: ""}); };
 
   app.commands.addCommand((CommandIDs.rename + ":" + widget.id), {
     execute: () => {
-      const td = widget.node.querySelector("[id='" + widget.selected + "']").
+      const td = widget.node.querySelector("[id='" + btoa(widget.selected) + "']").
         getElementsByClassName("filetree-item-name")[0];
       const text_area = td.getElementsByClassName("filetree-name-span")[0] as HTMLElement;
       const original = text_area.innerHTML;
