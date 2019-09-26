@@ -300,11 +300,16 @@ export class FileTreeWidget extends Widget {
           event.stopPropagation(); 
           event.preventDefault();
           if (this.selected === path){
-            commands.execute((CommandIDs.toggle + ":" + this.id), {row: path, level: level + 1});
+            commands.execute((CommandIDs.rename + ":" + this.id));
           } else {
             commands.execute((CommandIDs.select + ":" + this.id), {path: path});
           }
         };
+
+        tr.ondblclick = (event) => {
+          commands.execute((CommandIDs.toggle + ":" + this.id), {row: path, level: level + 1});
+        };
+
         tr.ondrop = (event) => { commands.execute("filetree:move", {from: event.dataTransfer.getData("Path"), to: path}); };
         tr.ondragover = (event) => {event.preventDefault(); };
         if (!(path in this.controller)) {
