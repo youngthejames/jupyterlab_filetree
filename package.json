@@ -1,6 +1,6 @@
 {
   "name": "jupyterlab_filetree",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "File Tree View as side bar tool",
   "keywords": [
     "jupyter",

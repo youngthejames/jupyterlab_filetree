@@ -15,7 +15,7 @@ import {
 
 import {
   FileTreeWidget,
-} from "./index";
+} from "./filetree";
 
 /**
  * The maximum upload size (in bytes) for notebook version < 5.1.0
