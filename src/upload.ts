@@ -1,21 +1,21 @@
-import { ToolbarButton, showErrorMessage, Dialog, showDialog } from '@jupyterlab/apputils';
+import { Dialog, showDialog, showErrorMessage, ToolbarButton } from "@jupyterlab/apputils";
 
-import { Contents } from '@jupyterlab/services';
+import { Contents } from "@jupyterlab/services";
 
-import { PageConfig, IChangedArgs } from '@jupyterlab/coreutils';
+import { IChangedArgs, PageConfig } from "@jupyterlab/coreutils";
 
-import { ArrayExt } from '@phosphor/algorithm';
+import { ArrayExt } from "@phosphor/algorithm";
 
-import { Signal } from '@phosphor/signaling';
+import { Signal } from "@phosphor/signaling";
 
 import {
   IDocumentManager,
-  shouldOverwrite
-} from '@jupyterlab/docmanager';
+  shouldOverwrite,
+} from "@jupyterlab/docmanager";
 
 import {
-  FileTreeWidget
-} from './index';
+  FileTreeWidget,
+} from "./filetree";
 
 /**
  * The maximum upload size (in bytes) for notebook version < 5.1.0
@@ -34,6 +34,7 @@ export interface IUploadModel {
 
 export class Uploader extends ToolbarButton {
 
+  // tslint:disable: variable-name
   private _input = Private.createUploadInput();
   private _uploads: IUploadModel[] = [];
   private _uploadChanged = new Signal<this, IChangedArgs<IUploadModel>>(this);
@@ -41,49 +42,30 @@ export class Uploader extends ToolbarButton {
   private manager: IDocumentManager;
   private widget: FileTreeWidget;
   private context: string;
-  
+  private basepath: string;
+
   constructor(options: any) {
     super({
-      iconClassName: 'jp-FileUploadIcon jp-Icon jp-Icon-16',
+      iconClassName: "jp-FileUploadIcon jp-Icon jp-Icon-16",
       onClick: () => {
-        this.context = '';
+        this.context = "";
         this._input.click();
       },
-      tooltip: 'Upload Files'
+      tooltip: "Upload Files",
     });
+    this.basepath = options.widget.basepath;
     this.manager = options.manager;
     this.widget = options.widget;
     this._input.onclick = this._onInputClicked;
-    this.context = '';
+    this.context = "";
     this._input.onchange = this._onInputChanged;
-    this.addClass('filetree-upload');
+    this.addClass("filetree-upload");
+    this.addClass(options.widget.filetree_id);
   }
 
-  contextClick(path: string) {
+  public contextClick(path: string) {
     this.context = path;
     this._input.click();
-  }
-
-  private _onInputChanged = () => {
-    let files = Array.prototype.slice.call(this._input.files) as File[];
-    let pending = files.map(file => this.upload(file, this.context));
-    this.context = '';
-    Promise.all(pending).catch(error => {
-      showErrorMessage('Upload Error', error);
-    });
-  };
-
-  private _onInputClicked = () => {
-    // In order to allow repeated uploads of the same file (with delete in between),
-    // we need to clear the input value to trigger a change event.
-    this._input.value = '';
-  };
-
-  private _uploadCheckDisposed(): Promise<void> {
-    if (this.isDisposed) {
-      return Promise.reject('Filemanager disposed. File upload canceled');
-    }
-    return Promise.resolve();
   }
 
   /**
@@ -98,30 +80,32 @@ export class Uploader extends ToolbarButton {
    * big to be sent in one request to the server. On newer versions, it will
    * ask for confirmation then upload the file in 1 MB chunks.
    */
-  async upload(file: File, path: string): Promise<Contents.IModel> {
+  public async upload(file: File, path: string): Promise<Contents.IModel> {
     const supportsChunked = PageConfig.getNotebookVersion() >= [5, 1, 0];
     const largeFile = file.size > LARGE_FILE_SIZE;
 
     if (largeFile && !supportsChunked) {
-      let msg = `Cannot upload file (>${LARGE_FILE_SIZE / (1024 * 1024)} MB). ${
+      const msg = `Cannot upload file (>${LARGE_FILE_SIZE / (1024 * 1024)} MB). ${
         file.name
       }`;
+      // tslint:disable-next-line: no-console
       console.warn(msg);
       throw msg;
     }
 
-    const err = 'File not uploaded';
+    const err = "File not uploaded";
     if (largeFile && !(await this._shouldUploadLarge(file))) {
-      throw 'Cancelled large file upload';
+      throw new Error("Cancelled large file upload");
     }
     await this._uploadCheckDisposed();
     await this.widget.refresh();
     await this._uploadCheckDisposed();
 
-    let contents = await this.widget.cm.get(this.context);
+    const contents = await this.widget.cm.get(this.context);
     contents.content.forEach(async (entry: any) => {
-      if ((entry.name === file.name) && !(await shouldOverwrite(file.name)))
+      if ((entry.name === file.name) && !(await shouldOverwrite(file.name))) {
         throw err;
+      }
     });
     await this._uploadCheckDisposed();
 
@@ -129,13 +113,35 @@ export class Uploader extends ToolbarButton {
     return await this._upload(file, path, chunkedUpload);
   }
 
+  private _onInputChanged = () => {
+    const files = Array.prototype.slice.call(this._input.files) as File[];
+    const pending = files.map((file) => this.upload(file, this.context));
+    this.context = "";
+    Promise.all(pending).catch((error) => {
+      showErrorMessage("Upload Error", error);
+    });
+  }
+
+  private _onInputClicked = () => {
+    // In order to allow repeated uploads of the same file (with delete in between),
+    // we need to clear the input value to trigger a change event.
+    this._input.value = "";
+  }
+
+  private _uploadCheckDisposed(): Promise<void> {
+    if (this.isDisposed) {
+      return Promise.reject("Filemanager disposed. File upload canceled");
+    }
+    return Promise.resolve();
+  }
+
   private async _shouldUploadLarge(file: File): Promise<boolean> {
     const { button } = await showDialog({
-      title: 'Large file size warning',
       body: `The file size is ${Math.round(
-        file.size / (1024 * 1024)
+        file.size / (1024 * 1024),
       )} MB. Do you still want to upload it?`,
-      buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: 'UPLOAD' })]
+      buttons: [Dialog.cancelButton(), Dialog.warnButton({ label: "UPLOAD" })],
+      title: "Large file size warning",
     });
     return button.accept;
   }
@@ -145,44 +151,44 @@ export class Uploader extends ToolbarButton {
    */
   private async _upload(file: File, path_arg: string, chunked: boolean): Promise<Contents.IModel> {
     // Gather the file model parameters.
-    let path = path_arg || '';
-    path = path ? path + '/' + file.name : file.name;
-    let name = file.name;
-    let type: Contents.ContentType = 'file';
-    let format: Contents.FileFormat = 'base64';
+    let path = path_arg || "";
+    path = path ? path + "/" + file.name : file.name;
+    const name = file.name;
+    const type: Contents.ContentType = "file";
+    const format: Contents.FileFormat = "base64";
 
     const uploadInner = async (
       blob: Blob,
-      chunk?: number
+      chunk?: number,
     ): Promise<Contents.IModel> => {
       await this._uploadCheckDisposed();
-      let reader = new FileReader();
+      const reader = new FileReader();
       reader.readAsDataURL(blob);
       await new Promise((resolve, reject) => {
         reader.onload = resolve;
-        reader.onerror = event =>
+        reader.onerror = (event) =>
           reject(`Failed to upload "${file.name}":` + event);
       });
       await this._uploadCheckDisposed();
 
       // remove header https://stackoverflow.com/a/24289420/907060
-      const content = (reader.result as string).split(',')[1];
+      const content = (reader.result as string).split(",")[1];
 
-      let model: Partial<Contents.IModel> = {
-        type,
+      const model: Partial<Contents.IModel> = {
+        chunk,
+        content,
         format,
         name,
-        chunk,
-        content
+        type,
       };
-      return await this.manager.services.contents.save(path, model);
+      return await this.manager.services.contents.save(this.basepath + path, model);
     };
 
     if (!chunked) {
       try {
         return await uploadInner(file);
       } catch (err) {
-        ArrayExt.removeFirstWhere(this._uploads, uploadIndex => {
+        ArrayExt.removeFirstWhere(this._uploads, (uploadIndex) => {
           return file.name === uploadIndex.path;
         });
         throw err;
@@ -193,9 +199,9 @@ export class Uploader extends ToolbarButton {
 
     let upload = { path, progress: 0 };
     this._uploadChanged.emit({
-      name: 'start',
+      name: "start",
       newValue: upload,
-      oldValue: null
+      oldValue: null,
     });
 
     for (let start = 0; !finalModel; start += CHUNK_SIZE) {
@@ -207,9 +213,9 @@ export class Uploader extends ToolbarButton {
       this._uploads.splice(this._uploads.indexOf(upload));
       this._uploads.push(newUpload);
       this._uploadChanged.emit({
-        name: 'update',
+        name: "update",
         newValue: newUpload,
-        oldValue: upload
+        oldValue: upload,
       });
       upload = newUpload;
 
@@ -217,14 +223,14 @@ export class Uploader extends ToolbarButton {
       try {
         currentModel = await uploadInner(file.slice(start, end), chunk);
       } catch (err) {
-        ArrayExt.removeFirstWhere(this._uploads, uploadIndex => {
+        ArrayExt.removeFirstWhere(this._uploads, (uploadIndex) => {
           return file.name === uploadIndex.path;
         });
 
         this._uploadChanged.emit({
-          name: 'failure',
+          name: "failure",
           newValue: upload,
-          oldValue: null
+          oldValue: null,
         });
 
         throw err;
@@ -237,9 +243,9 @@ export class Uploader extends ToolbarButton {
 
     this._uploads.splice(this._uploads.indexOf(upload));
     this._uploadChanged.emit({
-      name: 'finish',
+      name: "finish",
       newValue: null,
-      oldValue: upload
+      oldValue: upload,
     });
 
     return finalModel;
@@ -247,11 +253,12 @@ export class Uploader extends ToolbarButton {
 
 }
 
+// tslint:disable-next-line: no-namespace
 namespace Private {
 
   export function createUploadInput(): HTMLInputElement {
-    let input = document.createElement('input');
-    input.type = 'file';
+    const input = document.createElement("input");
+    input.type = "file";
     input.multiple = true;
     return input;
   }
