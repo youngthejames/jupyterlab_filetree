@@ -441,18 +441,12 @@ export class FileTreeWidget extends Widget {
     const base = this.cm.get(this.basepath + path);
     const next = base.then(async (res) => {
       if (res.type === "directory") {
-        // tslint:disable-next-line: no-console
-        console.log("New Folder: " + res.name);
         const new_folder = zip.folder(res.name);
         for (const c in res.content) {
           await this.wrapFolder(new_folder, res.content[c].path);
         }
       } else {
-        // tslint:disable-next-line: no-console
-        console.log("Upload: " + res.name);
         zip.file(res.name, res.content);
-        // tslint:disable-next-line: no-console
-        console.log(res.content); // need to wait to pull content
       }
     });
     await next;
@@ -513,17 +507,17 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
 
   app.commands.addCommand((CommandIDs.toggle + ":" + widget.id), {
     execute: (args) => {
-      const row = btoa(args.row as string);
+      const row = args.row as string;
       const level = args.level as number;
 
-      let row_element = widget.node.querySelector("[id='" + row + "']") as HTMLElement;
+      let row_element = widget.node.querySelector("[id='" + btoa(row) + "']") as HTMLElement;
 
-      if (row_element.nextElementSibling && atob(row_element.nextElementSibling.id).startsWith(atob(row))) { // next element in folder, already constructed
+      if (row_element.nextElementSibling && atob(row_element.nextElementSibling.id).startsWith(row + "/")) { // next element in folder, already constructed
         const display = switchView((widget.node.querySelector("[id='" + row_element.nextElementSibling.id + "']") as HTMLElement).style.display);
         widget.controller[row].open = !(widget.controller[row].open);
         const open_flag = widget.controller[row].open;
         // open folder
-        while (row_element.nextElementSibling && atob(row_element.nextElementSibling.id).startsWith(atob(row) + "/")) {
+        while (row_element.nextElementSibling && atob(row_element.nextElementSibling.id).startsWith(row + "/")) {
           row_element = (widget.node.querySelector("[id='" + row_element.nextElementSibling.id + "']") as HTMLElement);
           // check if the parent folder is open
           if (!(open_flag) || widget.controller[PathExt.dirname(atob(row_element.id))].open) {
@@ -531,7 +525,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
           }
         }
       } else { // if children elements don't exist yet
-        const base = app.serviceManager.contents.get(widget.basepath + atob(row));
+        const base = app.serviceManager.contents.get(widget.basepath + row);
         base.then((res) => {
           widget.buildTableContents(res.content, level, row_element);
           widget.controller[row] = {last_modified: res.last_modified, open: true};
