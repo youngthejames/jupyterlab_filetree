@@ -807,19 +807,19 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   app.contextMenu.addItem({
     command: (CommandIDs.create_folder + ":" + widget.id),
     rank: 2,
-    selector: "div." + widget.id,
+    selector: "div." + widget.id + " > table > * > .filetree-folder",
   });
 
   app.contextMenu.addItem({
     command: (CommandIDs.create_file + ":" + widget.id),
     rank: 1,
-    selector: "div." + widget.id,
+    selector: "div." + widget.id + " > table > * > .filetree-folder",
   });
 
   app.contextMenu.addItem({
     command: (CommandIDs.upload + ":" + widget.id),
     rank: 3,
-    selector: "div." + widget.id,
+    selector: "div." + widget.id + " > table > * > .filetree-folder",
   });
 
   app.contextMenu.addItem({
