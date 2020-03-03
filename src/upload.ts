@@ -4,9 +4,11 @@ import { Contents } from "@jupyterlab/services";
 
 import { IChangedArgs, PageConfig } from "@jupyterlab/coreutils";
 
-import { ArrayExt } from "@phosphor/algorithm";
+import { fileUploadIcon } from "@jupyterlab/ui-components";
 
-import { Signal } from "@phosphor/signaling";
+import { ArrayExt } from "@lumino/algorithm";
+
+import { Signal } from "@lumino/signaling";
 
 import {
   IDocumentManager,
@@ -46,7 +48,7 @@ export class Uploader extends ToolbarButton {
 
   constructor(options: any) {
     super({
-      iconClassName: "jp-FileUploadIcon jp-Icon jp-Icon-16",
+      icon: fileUploadIcon,
       onClick: () => {
         this.context = "";
         this._input.click();

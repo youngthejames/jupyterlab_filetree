@@ -23,8 +23,12 @@ import {
 } from "@jupyterlab/apputils";
 
 import {
+  LabIcon, refreshIcon, newFolderIcon
+} from "@jupyterlab/ui-components";
+
+import {
   PanelLayout, Widget,
-} from "@phosphor/widgets";
+} from "@lumino/widgets";
 
 import {
   Uploader,
@@ -32,7 +36,7 @@ import {
 
 import { saveAs } from "file-saver";
 
-import * as JSZip from "jszip";
+import JSZip from "jszip";
 
 import "../style/index.css";
 
@@ -300,7 +304,8 @@ export class FileTreeWidget extends Widget {
         tr.onclick = (event) => {
           event.stopPropagation();
           event.preventDefault();
-          if ((event.target as HTMLElement).classList.contains("jp-DirListing-itemIcon")) {
+          var classList = (event.target as HTMLElement).classList;
+          if (classList.contains("jp-DirListing-itemIcon") || classList.contains("jp-icon-selectable")) {
             commands.execute((CommandIDs.select + ":" + this.id), {path});
             // clicks on icon -> expand
             commands.execute((CommandIDs.toggle + ":" + this.id), {row: path, level: level + 1});
@@ -356,18 +361,20 @@ export class FileTreeWidget extends Widget {
     const td3 = document.createElement("td");
     tr.className = "filetree-item";
 
-    const icon = document.createElement("span");
-    icon.className = "jp-DirListing-itemIcon ";
+    var icon = null;
     if (object.type === "directory") {
-      icon.className += this.dr.getFileType("directory").iconClass;
+      icon = LabIcon.resolveElement({icon: this.dr.getFileType("directory").icon});
+      icon.className = "jp-DirListing-itemIcon";
       tr.className += " filetree-folder";
     } else {
       const iconClass = this.dr.getFileTypesForPath(object.path);
       tr.className += " filetree-file";
       if (iconClass.length === 0) {
-        icon.className += this.dr.getFileType("text").iconClass;
+        icon = LabIcon.resolveElement({icon: this.dr.getFileType("text").icon});
+        icon.className = "jp-DirListing-itemIcon";
       } else {
-        icon.className += this.dr.getFileTypesForPath(object.path)[0].iconClass;
+        icon = LabIcon.resolveElement({icon: this.dr.getFileTypesForPath(object.path)[0].icon});
+        icon.className = "jp-DirListing-itemIcon";
       }
     }
 
@@ -830,7 +837,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   });
 
   const new_file = new ToolbarButton({
-    iconClassName: "jp-NewFolderIcon jp-Icon jp-Icon-16",
+    icon: newFolderIcon,
     onClick: () => {
       app.commands.execute((CommandIDs.create_folder + ":" + widget.id), {path: ""});
     },
@@ -841,7 +848,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   widget.toolbar.addItem("upload", uploader);
 
   const refresh = new ToolbarButton({
-    iconClassName: "jp-RefreshIcon jp-Icon jp-Icon-16",
+    icon: refreshIcon,
     onClick: () => {
       app.commands.execute((CommandIDs.refresh + ":" + widget.id));
     },
