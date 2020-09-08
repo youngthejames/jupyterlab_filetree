@@ -140,8 +140,7 @@ export class FileTreeWidget extends Widget {
 
   public buildTableContents(data: any, level: number, parent: any) {
     const commands = this.commands;
-      const map = this.sortContents(data);
-      console.log(map);
+    const map = this.sortContents(data);
     data.forEach ( (item: any, index: any) => {
       const sorted_entry = map[index];
       const entry = data[sorted_entry[1]];
@@ -202,11 +201,8 @@ export class FileTreeWidget extends Widget {
   }
 
   public sortContents(data: any) {
-      console.log(data);
       const names = data.map( (value : any, index : number,
         array: any) => [value.name, index]);
-      console.log("name");
-      console.log(names);
     return names.sort();
   }
 
