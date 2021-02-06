@@ -371,7 +371,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
       // const { page, workspaces } = app.info.urls;
       const workspace = PathExt.basename(resolver.name);
       const url =
-        (workspaceMatch ? URLExt.join(paths.urls.workspaces, workspace) : paths.urls.app) +
+        (workspaceMatch ? URLExt.join(paths.urls.base, "workspaces", workspace) : paths.urls.app) +
         router.current.search +
         router.current.hash;
 
