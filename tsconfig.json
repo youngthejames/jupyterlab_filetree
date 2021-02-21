@@ -11,6 +11,9 @@
     "noEmitOnError": true,
     "noImplicitAny": true,
     "noUnusedLocals": true,
+    "paths": {
+      "jszip": ["../../../node_modules/jszip/dist/jszip.min.js"]
+    },
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
     "outDir": "lib",
