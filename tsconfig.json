@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
     "composite": true,
     "declaration": true,
     "esModuleInterop": true,
@@ -12,7 +13,7 @@
     "noImplicitAny": true,
     "noUnusedLocals": true,
     "paths": {
-      "jszip": ["../../../node_modules/jszip/dist/jszip.min.js"]
+      "jszip": ["../node_modules/jszip/dist/jszip.min.js"]
     },
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
