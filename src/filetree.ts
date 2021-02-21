@@ -17,6 +17,15 @@ import "../style/index.css";
 // tslint:disable: max-line-length
 // tslint:disable: max-classes-per-file
 
+
+function u_btoa(str : string) {
+    return btoa(encodeURIComponent(str));
+}
+
+function u_atob(str : string) {
+    return decodeURIComponent(atob(str));
+}
+
 export class FileTreeWidget extends Widget {
   public cm: ContentsManager;
   public dr: DocumentRegistry;
@@ -113,7 +122,7 @@ export class FileTreeWidget extends Widget {
     });
     Promise.all(array).then((results) => {
       for (const r in results) {
-        const row_element = this.node.querySelector("[id='" + btoa(results[r].path.replace(this.basepath, "")) + "']");
+        const row_element = this.node.querySelector("[id='" + u_btoa(results[r].path.replace(this.basepath, "")) + "']");
         this.buildTableContents(results[r].content, 1 + results[r].path.split("/").length, row_element);
       }
     }).catch((reasons) => {
@@ -272,7 +281,7 @@ export class FileTreeWidget extends Widget {
     tr.appendChild(td1);
     tr.appendChild(td2);
     tr.appendChild(td3);
-    tr.id = btoa(object.path);
+    tr.id = u_btoa(object.path);
 
     return tr;
   }
@@ -336,17 +345,17 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
       const row = args.row as string;
       const level = args.level as number;
 
-      let row_element = widget.node.querySelector("[id='" + btoa(row) + "']") as HTMLElement;
+      let row_element = widget.node.querySelector("[id='" + u_btoa(row) + "']") as HTMLElement;
 
-      if (row_element.nextElementSibling && atob(row_element.nextElementSibling.id).startsWith(row + "/")) { // next element in folder, already constructed
+      if (row_element.nextElementSibling && u_atob(row_element.nextElementSibling.id).startsWith(row + "/")) { // next element in folder, already constructed
         const display = switchView((widget.node.querySelector("[id='" + row_element.nextElementSibling.id + "']") as HTMLElement).style.display);
         widget.controller[row].open = !(widget.controller[row].open);
         const open_flag = widget.controller[row].open;
         // open folder
-        while (row_element.nextElementSibling && atob(row_element.nextElementSibling.id).startsWith(row + "/")) {
+        while (row_element.nextElementSibling && u_atob(row_element.nextElementSibling.id).startsWith(row + "/")) {
           row_element = (widget.node.querySelector("[id='" + row_element.nextElementSibling.id + "']") as HTMLElement);
           // check if the parent folder is open
-          if (!(open_flag) || widget.controller[PathExt.dirname(atob(row_element.id))].open) {
+          if (!(open_flag) || widget.controller[PathExt.dirname(u_atob(row_element.id))].open) {
             row_element.style.display = display;
           }
         }
@@ -390,7 +399,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
         Promise.all(array).then((results) => {
           for (const r in results) {
             if (results[r].type === "directory") {
-              const row_element = widget.node.querySelector("[id='" + btoa(results[r].path) + "']");
+              const row_element = widget.node.querySelector("[id='" + u_btoa(results[r].path) + "']");
               widget.buildTableContents(results[r].content, 1 + results[r].path.split("/").length, row_element);
             }
           }
@@ -427,14 +436,14 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
   app.commands.addCommand((CommandIDs.set_context + ":" + widget.id), {
     execute: (args) => {
       if (widget.selected !== "") {
-        const element = (widget.node.querySelector("[id='" + btoa(widget.selected) + "']") as HTMLElement);
+        const element = (widget.node.querySelector("[id='" + u_btoa(widget.selected) + "']") as HTMLElement);
         if (element !== null) {
           element.className = element.className.replace("selected", "");
         }
       }
       widget.selected = args.path as string;
       if (widget.selected !== "") {
-        const element = widget.node.querySelector("[id='" + btoa(widget.selected) + "']");
+        const element = widget.node.querySelector("[id='" + u_btoa(widget.selected) + "']");
         if (element !== null) {
           element.className += " selected";
         }
@@ -447,14 +456,14 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
     execute: (args) => {
       if (widget.selected !== "") {
         // tslint:disable-next-line: no-shadowed-variable
-        const element = (widget.node.querySelector("[id='" + btoa(widget.selected) + "']") as HTMLElement);
+        const element = (widget.node.querySelector("[id='" + u_btoa(widget.selected) + "']") as HTMLElement);
         if (element !== null) {
           element.className = element.className.replace("selected", "");
         }
       }
       if (args.path === "") { return; }
       widget.selected = args.path as string;
-      const element = widget.node.querySelector("[id='" + btoa(widget.selected) + "']");
+      const element = widget.node.querySelector("[id='" + u_btoa(widget.selected) + "']");
       if (element !== null) {
         element.className += " selected";
       }
@@ -468,7 +477,7 @@ function constructFileTreeWidget(app: JupyterFrontEnd,
 
   app.commands.addCommand((CommandIDs.rename + ":" + widget.id), {
     execute: () => {
-      const td = widget.node.querySelector("[id='" + btoa(widget.selected) + "']").
+      const td = widget.node.querySelector("[id='" + u_btoa(widget.selected) + "']").
         getElementsByClassName("filetree-item-name")[0];
       const text_area = td.getElementsByClassName("filetree-name-span")[0] as HTMLElement;
 
