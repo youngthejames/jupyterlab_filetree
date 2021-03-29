@@ -28,44 +28,50 @@ export const CommandIDs = {
 
   move: "filetree:move",
 
-  copy_path: "filetree:copy_path"
-}
+  copy_path: "filetree:copy_path",
+};
 
 export const Patterns = {
   tree: new RegExp(`^${PageConfig.getOption("treeUrl")}([^?]+)`),
-  workspace: new RegExp(`^${PageConfig.getOption("workspacesUrl")}[^?\/]+/tree/([^?]+)`)
-}
+  workspace: new RegExp(
+    `^${PageConfig.getOption("workspacesUrl")}[^?\/]+/tree/([^?]+)`,
+  ),
+};
 
 export function switchView(mode: any) {
-  if (mode === "none") { return ""; } else { return "none"; }
+  if (mode === "none") {
+    return "";
+  } else {
+    return "none";
+  }
 }
 
 export function fileSizeString(fileBytes: number) {
-    if (fileBytes == null) {
-      return "";
-    }
-    if (fileBytes < 1024) {
-      return fileBytes + " B";
-    }
+  if (fileBytes == null) {
+    return "";
+  }
+  if (fileBytes < 1024) {
+    return fileBytes + " B";
+  }
 
-    let i = -1;
-    const byteUnits = [" KB", " MB", " GB", " TB"];
-    do {
-        fileBytes = fileBytes / 1024;
-        i++;
-    } while (fileBytes > 1024);
+  let i = -1;
+  const byteUnits = [" KB", " MB", " GB", " TB"];
+  do {
+    fileBytes = fileBytes / 1024;
+    i++;
+  } while (fileBytes > 1024);
 
-    return Math.max(fileBytes, 0.1).toFixed(1) + byteUnits[i];
+  return Math.max(fileBytes, 0.1).toFixed(1) + byteUnits[i];
 }
 
 export function writeZipFile(zip: JSZip, path: string) {
-  zip.generateAsync({type: "blob"}).then((content) => {
+  zip.generateAsync({ type: "blob" }).then((content) => {
     saveAs(content, PathExt.basename(path));
   });
 }
 
 export function doRename(text: HTMLElement, edit: HTMLInputElement) {
-  const parent = text.parentElement as HTMLElement;
+  const parent = text.parentElement;
   parent.replaceChild(edit, text);
   edit.focus();
   const index = edit.value.lastIndexOf(".");
@@ -75,7 +81,7 @@ export function doRename(text: HTMLElement, edit: HTMLInputElement) {
     edit.setSelectionRange(0, index);
   }
   // handle enter
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string>((resolve) => {
     edit.onblur = () => {
       parent.replaceChild(text, edit);
       resolve(edit.value);
@@ -128,8 +134,7 @@ export function createOpenNode(): HTMLElement {
 }
 
 export class OpenDirectWidget extends Widget {
-
-  constructor() {
+  public constructor() {
     super({ node: createOpenNode() });
   }
 
@@ -137,7 +142,7 @@ export class OpenDirectWidget extends Widget {
     return this.inputNode.value;
   }
 
-  get inputNode(): HTMLInputElement {
-    return this.node.getElementsByTagName("input")[0] as HTMLInputElement;
+  public get inputNode(): HTMLInputElement {
+    return this.node.getElementsByTagName("input")[0];
   }
 }

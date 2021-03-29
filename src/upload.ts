@@ -1,4 +1,10 @@
-import { Dialog, showDialog, showErrorMessage, ToolbarButton } from "@jupyterlab/apputils";
+/* eslint-disable @typescript-eslint/no-namespace */
+import {
+  Dialog,
+  showDialog,
+  showErrorMessage,
+  ToolbarButton,
+} from "@jupyterlab/apputils";
 
 import { Contents } from "@jupyterlab/services";
 
@@ -10,14 +16,9 @@ import { ArrayExt } from "@lumino/algorithm";
 
 import { Signal } from "@lumino/signaling";
 
-import {
-  IDocumentManager,
-  shouldOverwrite,
-} from "@jupyterlab/docmanager";
+import { IDocumentManager, shouldOverwrite } from "@jupyterlab/docmanager";
 
-import {
-  FileTreeWidget,
-} from "./filetree";
+import { FileTreeWidget } from "./filetree";
 
 /**
  * The maximum upload size (in bytes) for notebook version < 5.1.0
@@ -35,8 +36,6 @@ export interface IUploadModel {
 }
 
 export class Uploader extends ToolbarButton {
-
-  // tslint:disable: variable-name
   private _input = Private.createUploadInput();
   private _uploads: IUploadModel[] = [];
   private _uploadChanged = new Signal<this, IChangedArgs<IUploadModel>>(this);
@@ -46,7 +45,7 @@ export class Uploader extends ToolbarButton {
   private context: string;
   private basepath: string;
 
-  constructor(options: any) {
+  public constructor(options: any) {
     super({
       icon: fileUploadIcon,
       onClick: () => {
@@ -87,10 +86,10 @@ export class Uploader extends ToolbarButton {
     const largeFile = file.size > LARGE_FILE_SIZE;
 
     if (largeFile && !supportsChunked) {
-      const msg = `Cannot upload file (>${LARGE_FILE_SIZE / (1024 * 1024)} MB). ${
-        file.name
-      }`;
-      // tslint:disable-next-line: no-console
+      const msg = `Cannot upload file (>${
+        LARGE_FILE_SIZE / (1024 * 1024)
+      } MB). ${file.name}`;
+      // eslint-disable-next-line no-console
       console.warn(msg);
       throw msg;
     }
@@ -105,7 +104,7 @@ export class Uploader extends ToolbarButton {
 
     const contents = await this.widget.cm.get(this.context);
     contents.content.forEach(async (entry: any) => {
-      if ((entry.name === file.name) && !(await shouldOverwrite(file.name))) {
+      if (entry.name === file.name && !(await shouldOverwrite(file.name))) {
         throw err;
       }
     });
@@ -122,13 +121,13 @@ export class Uploader extends ToolbarButton {
     Promise.all(pending).catch((error) => {
       showErrorMessage("Upload Error", error);
     });
-  }
+  };
 
   private _onInputClicked = () => {
     // In order to allow repeated uploads of the same file (with delete in between),
     // we need to clear the input value to trigger a change event.
     this._input.value = "";
-  }
+  };
 
   private _uploadCheckDisposed(): Promise<void> {
     if (this.isDisposed) {
@@ -151,7 +150,11 @@ export class Uploader extends ToolbarButton {
   /**
    * Perform the actual upload.
    */
-  private async _upload(file: File, path_arg: string, chunked: boolean): Promise<Contents.IModel> {
+  private async _upload(
+    file: File,
+    path_arg: string,
+    chunked: boolean,
+  ): Promise<Contents.IModel> {
     // Gather the file model parameters.
     let path = path_arg || "";
     path = path ? path + "/" + file.name : file.name;
@@ -183,16 +186,20 @@ export class Uploader extends ToolbarButton {
         name,
         type,
       };
-      return await this.manager.services.contents.save(this.basepath + path, model);
+      return await this.manager.services.contents.save(
+        this.basepath + path,
+        model,
+      );
     };
 
     if (!chunked) {
       try {
         return await uploadInner(file);
       } catch (err) {
-        ArrayExt.removeFirstWhere(this._uploads, (uploadIndex) => {
-          return file.name === uploadIndex.path;
-        });
+        ArrayExt.removeFirstWhere(
+          this._uploads,
+          (uploadIndex) => file.name === uploadIndex.path,
+        );
         throw err;
       }
     }
@@ -225,9 +232,10 @@ export class Uploader extends ToolbarButton {
       try {
         currentModel = await uploadInner(file.slice(start, end), chunk);
       } catch (err) {
-        ArrayExt.removeFirstWhere(this._uploads, (uploadIndex) => {
-          return file.name === uploadIndex.path;
-        });
+        ArrayExt.removeFirstWhere(
+          this._uploads,
+          (uploadIndex) => file.name === uploadIndex.path,
+        );
 
         this._uploadChanged.emit({
           name: "failure",
@@ -252,17 +260,13 @@ export class Uploader extends ToolbarButton {
 
     return finalModel;
   }
-
 }
 
-// tslint:disable-next-line: no-namespace
 namespace Private {
-
   export function createUploadInput(): HTMLInputElement {
     const input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
     return input;
   }
-
 }
