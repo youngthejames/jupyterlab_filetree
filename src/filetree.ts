@@ -291,10 +291,7 @@ export class FileTreeWidget extends Widget {
   }
 
   public sortContents(data: any) {
-    const names = data.map((value: any, index: number) => [
-      value.name,
-      index,
-    ]);
+    const names = data.map((value: any, index: number) => [value.name, index]);
     return names.sort();
   }
 
