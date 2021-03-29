@@ -2,6 +2,7 @@
   "name": "jupyterlab_filetree",
   "version": "0.2.1",
   "description": "File Tree View as side bar tool",
+  "license": "Apache-2.0",
   "keywords": [
     "jupyter",
     "jupyterlab",
