@@ -2,6 +2,8 @@
 
 File Tree View as side bar tool
 
+[![Build Status](https://github.com/youngthejames/jupyterlab_filetree/workflows/Build%20Status/badge.svg?branch=main)](https://github.com/youngthejames/jupyterlab_filetree/actions?query=workflow%3A%22Build+Status%22)
+
 [![npm](https://img.shields.io/npm/v/jupyterlab_filetree.svg)](https://www.npmjs.com/package/jupyterlab_filetree)
 
 ![alt text](https://github.com/youngthejames/jupyterlab_filetree/blob/master/images/screenshot.png "File Tree Screenshot")
