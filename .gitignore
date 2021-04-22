@@ -3,6 +3,5 @@ lib/
 node_modules/
 *.egg-info/
 .ipynb_checkpoints
-yarn.lock
 package-lock.json
 jupyterlab_filetree/
