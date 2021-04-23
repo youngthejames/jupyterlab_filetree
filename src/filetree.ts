@@ -327,13 +327,17 @@ export class FileTreeWidget extends Widget {
     }
 
     // icon and name
+    for (let n = 0; n < level - 1; n++) {
+      const vbar = document.createElement("div");
+      vbar.className = 'filetree-vbar';
+      td.appendChild(vbar);
+    }
     td.appendChild(icon);
     const title = document.createElement("span");
     title.innerHTML = object.name;
     title.className = "filetree-name-span";
     td.appendChild(title);
     td.className = "filetree-item-name";
-    td.style.setProperty("--indent", level + "em");
 
     // file size
     const size = document.createElement("span");
