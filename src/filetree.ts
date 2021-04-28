@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-for-in-array */
 /* eslint-disable no-console */
 import {
+  ILabShell,
   ILayoutRestorer,
   IRouter,
   JupyterFrontEnd,
@@ -419,10 +420,23 @@ export function constructFileTreeWidget(
   restorer: ILayoutRestorer,
   manager: IDocumentManager,
   router: IRouter,
+  labShell: ILabShell,
 ) {
   const widget = new FileTreeWidget(app, basepath, id || "jupyterlab-filetree");
   restorer.add(widget, widget.id);
-  app.shell.add(widget, side);
+  app.shell.add(widget, side, { rank: 0 });
+
+  // When layout is modified, create a launcher if there are no open items.
+  void Promise.all([app.restored]).then(() => {
+    labShell.layoutModified.connect(() => {
+      if (
+        labShell.isEmpty('main') &&
+        app.commands.hasCommand('launcher:create')
+      ) {
+        return app.commands.execute('launcher:create');
+      }
+    });
+  });
 
   const uploader = new Uploader({ manager, widget });
 
@@ -845,7 +859,13 @@ export function constructFileTreeWidget(
   });
   widget.toolbar.addItem("refresh", refresh);
 
-  // setInterval(() => {
-  //   app.commands.execute(CommandIDs.refresh);
-  // }, 10000);
+  // Initialize
+  if (side == 'left') {
+    labShell.expandLeft();
+  } else {
+    labShell.expandRight();
+  }
+  if (app.commands.hasCommand('launcher:create')) {
+    app.commands.execute('launcher:create');
+  }
 }

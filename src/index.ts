@@ -1,4 +1,5 @@
 import {
+  ILabShell,
   ILayoutRestorer,
   IRouter,
   JupyterFrontEnd,
@@ -20,6 +21,7 @@ function activate(
   restorer: ILayoutRestorer,
   manager: IDocumentManager,
   router: IRouter,
+  labShell: ILabShell,
 ) {
   // eslint-disable-next-line no-console
   console.log("JupyterLab extension jupyterlab_filetree is activated!");
@@ -33,6 +35,7 @@ function activate(
     restorer,
     manager,
     router,
+    labShell,
   );
 }
 
@@ -46,6 +49,7 @@ const extension: JupyterFrontEndPlugin<void> = {
     ILayoutRestorer,
     IDocumentManager,
     IRouter,
+    ILabShell,
   ],
 };
 

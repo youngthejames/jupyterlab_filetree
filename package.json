@@ -70,7 +70,8 @@
   },
   "jupyterlab": {
     "extension": true,
-    "outputDir": "jupyterlab_filetree/labextension"
+    "outputDir": "jupyterlab_filetree/labextension",
+    "disabledExtensions": ["@jupyterlab/filebrowser-extension:browser"]
   },
   "styleModule": "style/index.js"
 }
