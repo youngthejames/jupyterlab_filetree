@@ -4,7 +4,6 @@ node_modules/
 *.egg-info/
 *__pycache__*
 .ipynb_checkpoints
-yarn.lock
 package-lock.json
 tsconfig.tsbuildinfo
-jupyterlab_filetree/labextension
+jupyterlab_filetree/
