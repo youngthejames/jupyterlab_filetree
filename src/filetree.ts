@@ -208,32 +208,31 @@ export class FileTreeWidget extends Widget {
         event.dataTransfer.setData("Path", tr.id);
       };
 
+      // On double-click on the name: rename
+      tr.ondblclick = (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+
+        if (
+          (event.target as HTMLElement).classList.contains("filetree-name-span")
+        ) {
+          commands.execute(CommandIDs.rename + ":" + this.id);
+        } else if (entry.type !== "directory") {
+          commands.execute("docmanager:open", { path: this.basepath + path });
+        }
+      };
+
       if (entry.type === "directory") {
+        // On click: expand directory
         tr.onclick = (event) => {
           event.stopPropagation();
           event.preventDefault();
-          const classList = (event.target as HTMLElement).classList;
-          if (
-            classList.contains("jp-DirListing-itemIcon") ||
-            classList.contains("jp-icon-selectable")
-          ) {
-            commands.execute(CommandIDs.select + ":" + this.id, { path });
-            // clicks on icon -> expand
-            commands.execute(CommandIDs.toggle + ":" + this.id, {
-              level: level + 1,
-              row: path,
-            });
-          } else if (
-            this.selected === path &&
-            (event.target as HTMLElement).classList.contains(
-              "filetree-name-span",
-            )
-          ) {
-            // clicks on name -> rename
-            commands.execute(CommandIDs.rename + ":" + this.id);
-          } else {
-            commands.execute(CommandIDs.select + ":" + this.id, { path });
-          }
+
+          commands.execute(CommandIDs.select + ":" + this.id, { path });
+          commands.execute(CommandIDs.toggle + ":" + this.id, {
+            level: level + 1,
+            row: path,
+          });
         };
 
         tr.ondrop = (event) => {
@@ -255,20 +254,7 @@ export class FileTreeWidget extends Widget {
         tr.onclick = (event) => {
           event.stopPropagation();
           event.preventDefault();
-          if (
-            this.selected === path &&
-            (event.target as HTMLElement).classList.contains(
-              "filetree-name-span",
-            )
-          ) {
-            // clicks on name -> rename
-            commands.execute(CommandIDs.rename + ":" + this.id);
-          } else {
-            commands.execute(CommandIDs.select + ":" + this.id, { path });
-          }
-        };
-        tr.ondblclick = () => {
-          commands.execute("docmanager:open", { path: this.basepath + path });
+          commands.execute(CommandIDs.select + ":" + this.id, { path });
         };
       }
 
