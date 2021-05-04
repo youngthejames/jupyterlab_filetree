@@ -443,7 +443,7 @@ export async function constructFileTreeWidget(
   router: IRouter,
   settings: ISettingRegistry,
 ) {
-  const setting = await settings.load('jupyterlab_filetree');
+  const setting = await settings.load(id);
 
   const widget = new FileTreeWidget(app, basepath, id, setting);
   restorer.add(widget, widget.id);
