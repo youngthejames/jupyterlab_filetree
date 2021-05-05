@@ -1,0 +1,13 @@
+{
+    "title": "Filetree Settings",
+    "description": "Settings for the Filetree extension.",
+    "type": "object",
+    "properties": {
+      "directoriesFirst": {
+        "type": "boolean",
+        "title": "Directories First",
+        "description": "Whether the directories should be displayed before files or not.",
+        "default": false
+      }
+    }
+  }

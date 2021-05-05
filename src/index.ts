@@ -5,6 +5,8 @@ import {
   JupyterFrontEndPlugin,
 } from "@jupyterlab/application";
 
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+
 import { IDocumentManager } from "@jupyterlab/docmanager";
 
 import { IWindowResolver } from "@jupyterlab/apputils";
@@ -20,32 +22,35 @@ function activate(
   restorer: ILayoutRestorer,
   manager: IDocumentManager,
   router: IRouter,
+  settings: ISettingRegistry,
 ) {
   // eslint-disable-next-line no-console
   console.log("JupyterLab extension jupyterlab_filetree is activated!");
   constructFileTreeWidget(
     app,
     "",
-    "filetree-jupyterlab",
+    "@youngthejames:jupyterlab_filetree",
     "left",
     paths,
     resolver,
     restorer,
     manager,
     router,
+    settings,
   );
 }
 
 const extension: JupyterFrontEndPlugin<void> = {
   activate,
   autoStart: true,
-  id: "jupyterlab_filetree",
+  id: "@youngthejames:jupyterlab_filetree",
   requires: [
     JupyterFrontEnd.IPaths,
     IWindowResolver,
     ILayoutRestorer,
     IDocumentManager,
     IRouter,
+    ISettingRegistry,
   ],
 };
 
