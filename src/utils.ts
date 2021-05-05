@@ -1,61 +1,61 @@
-import { Widget } from "@lumino/widgets";
-import { PageConfig, PathExt } from "@jupyterlab/coreutils";
-import { saveAs } from "file-saver";
-import JSZip from "jszip";
+import { Widget } from '@lumino/widgets';
+import { PageConfig, PathExt } from '@jupyterlab/coreutils';
+import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 
 export const CommandIDs = {
-  navigate: "filetree:navigate",
+  navigate: 'filetree:navigate',
 
-  toggle: "filetree:toggle",
+  toggle: 'filetree:toggle',
 
-  refresh: "filetree:refresh",
+  refresh: 'filetree:refresh',
 
-  select: "filetree:select",
+  select: 'filetree:select',
 
-  set_context: "filetree:set-context",
+  set_context: 'filetree:set-context',
 
-  rename: "filetree:rename",
+  rename: 'filetree:rename',
 
-  create_folder: "filetree:create-folder",
+  create_folder: 'filetree:create-folder',
 
-  create_file: "filetree:create-file",
+  create_file: 'filetree:create-file',
 
-  delete_op: "filetree:delete",
+  delete_op: 'filetree:delete',
 
-  download: "filetree:download",
+  download: 'filetree:download',
 
-  upload: "filetree:upload",
+  upload: 'filetree:upload',
 
-  move: "filetree:move",
+  move: 'filetree:move',
 
-  copy_path: "filetree:copy_path",
+  copy_path: 'filetree:copy_path'
 };
 
 export const Patterns = {
-  tree: new RegExp(`^${PageConfig.getOption("treeUrl")}([^?]+)`),
+  tree: new RegExp(`^${PageConfig.getOption('treeUrl')}([^?]+)`),
   workspace: new RegExp(
-    `^${PageConfig.getOption("workspacesUrl")}[^?\/]+/tree/([^?]+)`,
-  ),
+    `^${PageConfig.getOption('workspacesUrl')}[^?/]+/tree/([^?]+)`
+  )
 };
 
 export function switchView(mode: any) {
-  if (mode === "none") {
-    return "";
+  if (mode === 'none') {
+    return '';
   } else {
-    return "none";
+    return 'none';
   }
 }
 
 export function fileSizeString(fileBytes: number) {
-  if (fileBytes == null) {
-    return "";
+  if (fileBytes === null) {
+    return '';
   }
   if (fileBytes < 1024) {
-    return fileBytes + " B";
+    return fileBytes + ' B';
   }
 
   let i = -1;
-  const byteUnits = [" KB", " MB", " GB", " TB"];
+  const byteUnits = [' KB', ' MB', ' GB', ' TB'];
   do {
     fileBytes = fileBytes / 1024;
     i++;
@@ -65,7 +65,7 @@ export function fileSizeString(fileBytes: number) {
 }
 
 export function writeZipFile(zip: JSZip, path: string) {
-  zip.generateAsync({ type: "blob" }).then((content) => {
+  zip.generateAsync({ type: 'blob' }).then(content => {
     saveAs(content, PathExt.basename(path));
   });
 }
@@ -74,14 +74,14 @@ export function doRename(text: HTMLElement, edit: HTMLInputElement) {
   const parent = text.parentElement;
   parent.replaceChild(edit, text);
   edit.focus();
-  const index = edit.value.lastIndexOf(".");
+  const index = edit.value.lastIndexOf('.');
   if (index === -1) {
     edit.setSelectionRange(0, edit.value.length);
   } else {
     edit.setSelectionRange(0, index);
   }
   // handle enter
-  return new Promise<string>((resolve) => {
+  return new Promise<string>(resolve => {
     edit.onblur = () => {
       parent.replaceChild(text, edit);
       resolve(edit.value);
@@ -120,13 +120,13 @@ export function doRename(text: HTMLElement, edit: HTMLInputElement) {
 }
 
 export function createOpenNode(): HTMLElement {
-  const body = document.createElement("div");
-  const existingLabel = document.createElement("label");
-  existingLabel.textContent = "File Path:";
+  const body = document.createElement('div');
+  const existingLabel = document.createElement('label');
+  existingLabel.textContent = 'File Path:';
 
-  const input = document.createElement("input");
-  input.value = "";
-  input.placeholder = "/path/to/file";
+  const input = document.createElement('input');
+  input.value = '';
+  input.placeholder = '/path/to/file';
 
   body.appendChild(existingLabel);
   body.appendChild(input);
@@ -143,6 +143,6 @@ export class OpenDirectWidget extends Widget {
   }
 
   public get inputNode(): HTMLInputElement {
-    return this.node.getElementsByTagName("input")[0];
+    return this.node.getElementsByTagName('input')[0];
   }
 }
