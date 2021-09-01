@@ -107,6 +107,21 @@
   overflow: hidden;
   white-space: nowrap;
 }
+
 .filetree-header.modified {
   border-right: none;
+}
+
+.filetree-jupyterlab.jp-Toolbar
+  .jp-Toolbar-item:first-child
+  .jp-ToolbarButtonComponent {
+  width: 72px;
+  background: var(--jp-brand-color1);
+}
+
+.filetree-jupyterlab.jp-Toolbar
+  .jp-Toolbar-item:first-child
+  .jp-ToolbarButtonComponent
+  .jp-icon3 {
+  fill: white;
 }
